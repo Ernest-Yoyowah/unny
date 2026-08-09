@@ -7,15 +7,18 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AppText, Input, Button, Badge } from "../../components/ui";
+
+import { AppText, Input, Button } from "../../components/ui";
 import { useRegister } from "../../hooks/useAuth";
-import { Colors, Spacing, Typography, BorderRadius } from "../../theme";
+import { Colors, Spacing, BorderRadius } from "../../theme";
 import { AuthStackParamList } from "../../navigation/types";
 import { extractApiError } from "../../api/client";
 
@@ -24,17 +27,22 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 const schema = z
   .object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
+
     email: z.string().email("Enter a valid institutional email address"),
-    organizationCode: z.string().min(4, "Enter a valid organization join code"),
-    role: z.enum(["student", "lecturer"]),
+
+    institutionCode: z.string().min(4, "Enter a valid institution code"),
+
+    role: z.enum(["student", "contributor"]),
+
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
       .regex(/[A-Z]/, "Must contain at least one uppercase letter")
       .regex(/[0-9]/, "Must contain at least one number"),
+
     confirmPassword: z.string(),
   })
-  .refine((d) => d.password === d.confirmPassword, {
+  .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
   });
@@ -43,8 +51,10 @@ type FormValues = z.infer<typeof schema>;
 
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+
   const { mutate: register, isPending, error } = useRegister();
-  const [selectedRole, setSelectedRole] = useState<"student" | "lecturer">(
+
+  const [selectedRole, setSelectedRole] = useState<"student" | "contributor">(
     "student",
   );
 
@@ -55,10 +65,11 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
+
     defaultValues: {
       fullName: "",
       email: "",
-      organizationCode: "",
+      institutionCode: "",
       role: "student",
       password: "",
       confirmPassword: "",
@@ -68,10 +79,10 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const apiError = error ? extractApiError(error) : null;
 
   const onSubmit = (values: FormValues) => {
-    register(values);
+    register(values as any);
   };
 
-  const handleRoleSelect = (role: "student" | "lecturer") => {
+  const handleRoleSelect = (role: "student" | "contributor") => {
     setSelectedRole(role);
     setValue("role", role);
   };
@@ -82,7 +93,12 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        style={[styles.container, { paddingTop: insets.top }]}
+        style={[
+          styles.container,
+          {
+            paddingTop: insets.top,
+          },
+        ]}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -90,9 +106,12 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
+          hitSlop={{
+            top: 8,
+            bottom: 8,
+            left: 8,
+            right: 8,
+          }}
         >
           <Ionicons name="arrow-back" size={22} color={Colors.text.primary} />
         </TouchableOpacity>
@@ -101,8 +120,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <AppText variant="h2" weight="bold" style={styles.heading}>
             Create account
           </AppText>
+
           <AppText variant="body1" color="secondary">
-            Join your institution on Unny.
+            Join your academic community on Unny.
           </AppText>
         </View>
 
@@ -122,23 +142,25 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               color="secondary"
               style={styles.roleLabel}
             >
-              I am a
+              Account type
             </AppText>
+
             <View style={styles.roleSelector}>
-              {(["student", "lecturer"] as const).map((role) => (
+              {(["student", "contributor"] as const).map((role) => (
                 <TouchableOpacity
                   key={role}
                   style={[
                     styles.roleOption,
+
                     selectedRole === role && styles.roleOptionActive,
                   ]}
                   onPress={() => handleRoleSelect(role)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: selectedRole === role }}
                 >
                   <Ionicons
                     name={
-                      role === "student" ? "school-outline" : "easel-outline"
+                      role === "student"
+                        ? "school-outline"
+                        : "cloud-upload-outline"
                     }
                     size={18}
                     color={
@@ -147,13 +169,14 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                         : Colors.text.tertiary
                     }
                   />
+
                   <AppText
                     variant="body2"
                     weight={selectedRole === role ? "semibold" : "regular"}
                     color={selectedRole === role ? "primary" : "tertiary"}
                     style={styles.roleText}
                   >
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                    {role === "student" ? "Student" : "Contributor"}
                   </AppText>
                 </TouchableOpacity>
               ))}
@@ -163,16 +186,14 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <Controller
             control={control}
             name="fullName"
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field }) => (
               <Input
                 label="Full Name"
-                placeholder="Dr. Amaka Okonkwo"
+                placeholder="Ama Mensah"
                 autoCapitalize="words"
-                autoComplete="name"
-                textContentType="name"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
                 error={errors.fullName?.message}
                 required
               />
@@ -182,16 +203,15 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <Controller
             control={control}
             name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field }) => (
               <Input
                 label="Institutional Email"
-                placeholder="you@university.edu.ng"
+                placeholder="you@university.edu"
                 keyboardType="email-address"
                 autoComplete="email"
-                textContentType="emailAddress"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
                 error={errors.email?.message}
                 required
               />
@@ -200,17 +220,17 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
           <Controller
             control={control}
-            name="organizationCode"
-            render={({ field: { onChange, onBlur, value } }) => (
+            name="institutionCode"
+            render={({ field }) => (
               <Input
-                label="Organization Join Code"
-                placeholder="e.g. LEGON2023"
+                label="Institution Code"
+                placeholder="e.g. LEGON"
                 autoCapitalize="characters"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.organizationCode?.message}
-                hint="Provided by your institution admin"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={errors.institutionCode?.message}
+                hint="Provided by your institution"
                 required
               />
             )}
@@ -219,15 +239,14 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <Controller
             control={control}
             name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field }) => (
               <Input
                 label="Password"
                 placeholder="Create a strong password"
                 isSecure
-                textContentType="newPassword"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
                 error={errors.password?.message}
                 required
               />
@@ -237,15 +256,14 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <Controller
             control={control}
             name="confirmPassword"
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field }) => (
               <Input
                 label="Confirm Password"
                 placeholder="Repeat your password"
                 isSecure
-                textContentType="newPassword"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
                 error={errors.confirmPassword?.message}
                 required
               />
@@ -267,10 +285,8 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <AppText variant="body2" color="secondary">
             Already have an account?{" "}
           </AppText>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Login")}
-            accessibilityRole="button"
-          >
+
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
             <AppText variant="body2" color="accent" weight="semibold">
               Sign In
             </AppText>
@@ -282,32 +298,44 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.background },
-  container: { flex: 1, backgroundColor: Colors.background },
+  flex: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
   content: {
     paddingHorizontal: Spacing[6],
     paddingBottom: Spacing[12],
     paddingTop: Spacing[4],
     flexGrow: 1,
   },
+
   backBtn: {
     width: 40,
     height: 40,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing[4],
-    marginLeft: -Spacing[2],
   },
+
   headingBlock: {
     gap: Spacing[2],
     marginBottom: Spacing[8],
   },
+
   heading: {
     letterSpacing: -0.5,
   },
+
   form: {
     gap: Spacing[4],
   },
+
   errorBanner: {
     backgroundColor: Colors.status.errorLight,
     borderWidth: 1,
@@ -315,14 +343,16 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing[4],
   },
+
   roleLabel: {
     marginBottom: Spacing[2],
-    color: Colors.text.secondary,
   },
+
   roleSelector: {
     flexDirection: "row",
     gap: Spacing[3],
   },
+
   roleOption: {
     flex: 1,
     flexDirection: "row",
@@ -333,22 +363,25 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1.5,
     borderColor: Colors.border.default,
-    backgroundColor: Colors.surface,
   },
+
   roleOptionActive: {
     borderColor: Colors.primary,
     backgroundColor: Colors.primaryDim,
   },
+
   roleText: {
     textTransform: "capitalize",
   },
+
   submitBtn: {
     marginTop: Spacing[2],
   },
+
   footer: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
     marginTop: Spacing[8],
   },
 });

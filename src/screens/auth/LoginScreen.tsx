@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+
 import { AppText, Input, Button } from "../../components/ui";
 import { useLogin } from "../../hooks/useAuth";
 import { Colors, Spacing, Typography, BorderRadius } from "../../theme";
@@ -29,6 +30,7 @@ type FormValues = z.infer<typeof schema>;
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+
   const { mutate: login, isPending, error } = useLogin();
 
   const {
@@ -37,7 +39,10 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   const apiError = error ? extractApiError(error) : null;
@@ -51,16 +56,28 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       style={styles.flex}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={[styles.hero, { paddingTop: insets.top + Spacing[8] }]}>
+      <View
+        style={[
+          styles.hero,
+          {
+            paddingTop: insets.top + Spacing[8],
+          },
+        ]}
+      >
         <View style={styles.logoMark}>
           <AppText style={styles.logoLetter}>U</AppText>
         </View>
-        <AppText style={styles.brandName}>unny</AppText>
-        <AppText style={styles.tagline}>Academic resources · Akwaaba</AppText>
+
+        <AppText style={styles.brandName}>Unny</AppText>
+
+        <AppText style={styles.tagline}>
+          Academic collaboration · Akwaaba
+        </AppText>
       </View>
 
       <View style={styles.sheet}>
         <View style={styles.sheetHandle} />
+
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -70,8 +87,9 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <AppText variant="h3" weight="bold" style={styles.heading}>
               Welcome back
             </AppText>
+
             <AppText variant="body2" color="secondary">
-              Sign in to access your academic resources.
+              Sign in to continue exploring your academic community.
             </AppText>
           </View>
 
@@ -90,7 +108,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Institutional Email"
-                  placeholder="you@university.edu.ng"
+                  placeholder="student@university.edu"
                   keyboardType="email-address"
                   autoComplete="email"
                   textContentType="emailAddress"
@@ -147,6 +165,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <AppText variant="body2" color="secondary">
               New to Unny?{" "}
             </AppText>
+
             <TouchableOpacity
               onPress={() => navigation.navigate("Register")}
               accessibilityRole="button"
@@ -163,13 +182,18 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.primary },
+  flex: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+  },
+
   hero: {
     backgroundColor: Colors.primary,
     alignItems: "center",
     paddingBottom: Spacing[10],
     gap: Spacing[2],
   },
+
   logoMark: {
     width: 72,
     height: 72,
@@ -179,24 +203,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: Spacing[2],
   },
+
   logoLetter: {
     color: Colors.primary,
     fontSize: 34,
     fontWeight: "800" as const,
     letterSpacing: -1,
   },
+
   brandName: {
     color: Colors.text.inverse,
     fontSize: Typography.size["3xl"],
     fontWeight: Typography.weight.extrabold,
     letterSpacing: -1,
   },
+
   tagline: {
     color: Colors.gold,
     fontSize: Typography.size.sm,
     fontWeight: Typography.weight.medium,
     letterSpacing: 0.4,
   },
+
   sheet: {
     flex: 1,
     backgroundColor: Colors.surface,
@@ -204,6 +232,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: BorderRadius["3xl"],
     overflow: "hidden",
   },
+
   sheetHandle: {
     width: 36,
     height: 4,
@@ -212,21 +241,26 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: Spacing[3],
   },
+
   content: {
     paddingHorizontal: Spacing[6],
     paddingBottom: Spacing[12],
   },
+
   headingBlock: {
     gap: Spacing[1],
     marginTop: Spacing[5],
     marginBottom: Spacing[7],
   },
+
   heading: {
     letterSpacing: -0.5,
   },
+
   form: {
     gap: Spacing[4],
   },
+
   errorBanner: {
     backgroundColor: Colors.status.errorLight,
     borderWidth: 1,
@@ -234,13 +268,16 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing[4],
   },
+
   forgotLink: {
     alignSelf: "flex-end",
     marginTop: -Spacing[2],
   },
+
   submitBtn: {
     marginTop: Spacing[2],
   },
+
   footer: {
     flexDirection: "row",
     alignItems: "center",

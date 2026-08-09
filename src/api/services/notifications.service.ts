@@ -1,7 +1,7 @@
 import { apiClient } from "../client";
 import { Endpoints } from "../endpoints";
 import { Notification } from "../../types/notification.types";
-import { PaginatedResponse } from "./courses.service";
+import { PaginatedResponse } from "./projects.service";
 
 export const NotificationsService = {
   getNotifications: async (params?: {

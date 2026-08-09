@@ -8,14 +8,12 @@ import {
   AppText,
   Avatar,
   Badge,
-  Card,
   Divider,
   SectionCard,
 } from "../../components/ui";
-import { CourseCard } from "../../components/course/CourseCard";
 import { useAuthStore } from "../../store/auth.store";
-import { MOCK_COURSES, MOCK_STUDENT, MOCK_LECTURER } from "../../data/mock";
-import { Colors, Spacing, BorderRadius, Typography } from "../../theme";
+import { MOCK_STUDENT } from "../../data/mock";
+import { Colors, Spacing, BorderRadius } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
@@ -23,15 +21,9 @@ type Nav = NativeStackNavigationProp<MainStackParamList>;
 export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
+
   const user = useAuthStore((s) => s.user) ?? MOCK_STUDENT;
-  const isLecturer = user.role === "lecturer";
-
-  const student = isLecturer ? null : MOCK_STUDENT;
-  const lecturer = isLecturer ? MOCK_LECTURER : null;
-
-  const pinnedCourses = isLecturer
-    ? []
-    : MOCK_COURSES.filter((c) => c.isPinned && c.isEnrolled);
+  const student = MOCK_STUDENT;
 
   return (
     <ScrollView
@@ -41,92 +33,46 @@ export const ProfileScreen: React.FC = () => {
     >
       <View style={styles.profileCard}>
         <Avatar name={user.fullName} uri={user.avatarUrl} size="xl" />
+
         <AppText variant="h4" weight="bold" style={styles.name}>
           {user.fullName}
         </AppText>
+
         <View style={styles.roleBadgeRow}>
-          <Badge
-            label={
-              isLecturer
-                ? (MOCK_LECTURER.title ?? "Lecturer")
-                : `Level ${student?.level ?? ""}`
-            }
-            variant="primary"
-            size="md"
-          />
+          <Badge label={`Level ${student.level}`} variant="primary" size="md" />
+
           {user.isVerified && (
             <Badge label="Verified" variant="success" size="md" dot />
           )}
         </View>
+
         <AppText variant="body2" color="tertiary" style={styles.orgText}>
           {user.organizationName}
         </AppText>
       </View>
-
-      {isLecturer && lecturer ? (
-        <SectionCard style={styles.statsCard}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <AppText variant="h3" weight="bold">
-                {lecturer.managedCourseIds?.length ?? 0}
-              </AppText>
-              <AppText variant="caption" color="tertiary">
-                Courses
-              </AppText>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <AppText variant="h3" weight="bold">
-                {lecturer.totalStudentsCount ?? 0}
-              </AppText>
-              <AppText variant="caption" color="tertiary">
-                Students
-              </AppText>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <AppText variant="body1" weight="bold">
-                {lecturer.specialization ?? "—"}
-              </AppText>
-              <AppText variant="caption" color="tertiary">
-                Specialization
-              </AppText>
-            </View>
+      <SectionCard style={styles.statsCard}>
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <AppText variant="h3" weight="bold">
+              {student.level}
+            </AppText>
+            <AppText variant="caption" color="tertiary">
+              Level
+            </AppText>
           </View>
-        </SectionCard>
-      ) : student ? (
-        <SectionCard style={styles.statsCard}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <AppText variant="h3" weight="bold">
-                {student.enrolledCourseIds?.length ?? 0}
-              </AppText>
-              <AppText variant="caption" color="tertiary">
-                Courses
-              </AppText>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <AppText variant="h3" weight="bold">
-                {student.level ?? "—"}
-              </AppText>
-              <AppText variant="caption" color="tertiary">
-                Level
-              </AppText>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <AppText variant="body2" weight="bold" numberOfLines={1}>
-                {student.department ?? "—"}
-              </AppText>
-              <AppText variant="caption" color="tertiary">
-                Dept.
-              </AppText>
-            </View>
-          </View>
-        </SectionCard>
-      ) : null}
 
+          <View style={styles.statDivider} />
+
+          <View style={styles.statItem}>
+            <AppText variant="body2" weight="bold" numberOfLines={1}>
+              {student.department}
+            </AppText>
+            <AppText variant="caption" color="tertiary">
+              Dept.
+            </AppText>
+          </View>
+        </View>
+      </SectionCard>{" "}
       <SectionCard style={styles.infoCard}>
         <AppText
           variant="label"
@@ -136,20 +82,21 @@ export const ProfileScreen: React.FC = () => {
         >
           Account Information
         </AppText>
+
         {[
-          { label: "Email", value: user.email, icon: "mail-outline" },
           {
-            label: isLecturer ? "Staff ID" : "Student ID",
-            value: isLecturer
-              ? (lecturer?.staffId ?? "—")
-              : (student?.studentId ?? "—"),
+            label: "Email",
+            value: user.email,
+            icon: "mail-outline",
+          },
+          {
+            label: "Student ID",
+            value: student.studentId ?? "—",
             icon: "id-card-outline",
           },
           {
             label: "Department",
-            value: isLecturer
-              ? (lecturer?.department ?? "—")
-              : (student?.department ?? "—"),
+            value: student.department ?? "—",
             icon: "business-outline",
           },
           {
@@ -175,6 +122,7 @@ export const ProfileScreen: React.FC = () => {
                   {item.label}
                 </AppText>
               </View>
+
               <AppText
                 variant="body2"
                 weight="medium"
@@ -184,35 +132,11 @@ export const ProfileScreen: React.FC = () => {
                 {item.value}
               </AppText>
             </View>
+
             {index < 3 && <Divider spacing={Spacing[3]} />}
           </View>
         ))}
       </SectionCard>
-
-      {pinnedCourses.length > 0 && (
-        <View style={styles.section}>
-          <AppText variant="h5" weight="semibold" style={styles.sectionTitle}>
-            Pinned Courses
-          </AppText>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.pinnedList}
-          >
-            {pinnedCourses.map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                variant="pinned"
-                onPress={() =>
-                  navigation.navigate("CourseDetails", { courseId: course.id })
-                }
-              />
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
       <View style={styles.section}>
         <SectionCard style={styles.actionsCard}>
           {[
@@ -245,6 +169,7 @@ export const ProfileScreen: React.FC = () => {
                     color={Colors.text.secondary}
                   />
                 </View>
+
                 <AppText
                   variant="body2"
                   weight="medium"
@@ -252,23 +177,23 @@ export const ProfileScreen: React.FC = () => {
                 >
                   {action.label}
                 </AppText>
+
                 <Ionicons
                   name="chevron-forward"
                   size={16}
                   color={Colors.text.tertiary}
                 />
               </TouchableOpacity>
+
               {index < 2 && <Divider spacing={0} />}
             </View>
           ))}
         </SectionCard>
       </View>
-
       <View style={styles.footer} />
     </ScrollView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -339,12 +264,6 @@ const styles = StyleSheet.create({
   section: {
     marginTop: Spacing[6],
     paddingHorizontal: Spacing[5],
-  },
-  sectionTitle: {
-    marginBottom: Spacing[4],
-  },
-  pinnedList: {
-    gap: Spacing[3],
   },
   actionsCard: {
     padding: 0,

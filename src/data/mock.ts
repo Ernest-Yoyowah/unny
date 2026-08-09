@@ -1,9 +1,9 @@
-import { Organization } from "../types/organization.types";
-import { Course } from "../types/course.types";
-import { Document } from "../types/document.types";
 import { StudentProfile, LecturerProfile } from "../types/user.types";
 import { Notification } from "../types/notification.types";
 import { AuthResponse } from "../types/auth.types";
+import { Organization } from "@/types/moderation.types";
+import { Course } from "@/types/project.types";
+import { Document } from "@/types/document.types";
 
 const MOCK_TOKENS = {
   accessToken: "mock-access-token-demo-2026",
@@ -922,3 +922,100 @@ export const createDemoStudent = (
   },
   tokens: MOCK_TOKENS,
 });
+
+export const MOCK_FINAL_YEAR_PROJECT = {
+  id: "project-001",
+  title: "AI Based Student Academic Recommendation System",
+  abstract:
+    "A machine learning system that recommends academic resources and learning paths based on student performance data.",
+
+  department: "Computer Science",
+  programme: "BSc Computer Science",
+  yearGroup: "2026 Final Year",
+
+  supervisor: {
+    name: "Dr. Ama Boateng",
+    email: "ama.boateng@university.edu",
+  },
+
+  status: "In Progress",
+
+  progress: 65,
+
+  members: [
+    {
+      id: "student-001",
+      name: "Kwame Mensah",
+      role: "Lead Developer",
+    },
+    {
+      id: "student-002",
+      name: "Ama Owusu",
+      role: "Research Assistant",
+    },
+  ],
+
+  milestones: [
+    {
+      id: "m1",
+      title: "Project Proposal",
+      completed: true,
+    },
+    {
+      id: "m2",
+      title: "Literature Review",
+      completed: true,
+    },
+    {
+      id: "m3",
+      title: "System Development",
+      completed: false,
+    },
+    {
+      id: "m4",
+      title: "Final Defense",
+      completed: false,
+    },
+  ],
+
+  documents: [
+    {
+      id: "d1",
+      title: "Project Proposal",
+      type: "PDF",
+      status: "Submitted",
+      updatedAt: "2 days ago",
+    },
+    {
+      id: "d2",
+      title: "Chapter One",
+      type: "PDF",
+      status: "Draft",
+      updatedAt: "Yesterday",
+    },
+    {
+      id: "d3",
+      title: "System Architecture",
+      type: "IMAGE",
+      status: "Submitted",
+      updatedAt: "Today",
+    },
+  ],
+};
+
+export const MOCK_PROJECT_LIBRARY = [
+  {
+    id: "library-001",
+    title: "Smart Attendance System Using Facial Recognition",
+    department: "Computer Science",
+    year: "2025",
+    supervisor: "Dr. Kofi Mensah",
+  },
+  {
+    id: "library-002",
+    title: "Campus Mobile Learning Platform",
+    department: "Information Technology",
+    year: "2024",
+    supervisor: "Dr. Ama Boateng",
+  },
+];

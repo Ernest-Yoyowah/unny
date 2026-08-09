@@ -29,35 +29,35 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     id: "1",
-    icon: "library-outline",
-    tagline: "ACADEMIC RESOURCES",
-    title: "Everything your institution teaches, in one place.",
+    icon: "rocket-outline",
+    tagline: "ACADEMIC PROJECTS",
+    title: "Discover and showcase academic work.",
     description:
-      "Access lecture notes, assignments, past questions, and course materials uploaded by your verified lecturers.",
+      "Explore student projects, research resources, and academic contributions from verified institutions in one trusted platform.",
   },
   {
     id: "2",
     icon: "shield-checkmark-outline",
-    tagline: "VERIFIED IDENTITY",
-    title: "Your academic identity, institutionally verified.",
+    tagline: "VERIFIED COMMUNITY",
+    title: "A trusted academic network.",
     description:
-      "Students and lecturers are authenticated into verified university environments — no impersonation, no noise.",
+      "Students, contributors, and institutions connect through verified identities, reducing misinformation and protecting academic work.",
   },
   {
     id: "3",
-    icon: "archive-outline",
-    tagline: "PERSISTENT ARCHIVE",
-    title: "Learning materials preserved beyond the semester.",
+    icon: "cloud-upload-outline",
+    tagline: "SHARE KNOWLEDGE",
+    title: "Submit, organize, and preserve ideas.",
     description:
-      "Courses and resources are archived, not deleted. Access prior semester materials for reference at any time.",
+      "Upload projects, attach resources, add documentation, and build a lasting archive of academic achievements.",
   },
   {
     id: "4",
-    icon: "git-branch-outline",
-    tagline: "COURSE LIFECYCLE",
-    title: "Follow every course from creation to archive.",
+    icon: "git-merge-outline",
+    tagline: "COLLABORATION",
+    title: "From submission to recognition.",
     description:
-      "Track the full lifecycle of your academic courses — enrollment, active semester, and permanent archival.",
+      "Follow projects through discovery, review, moderation, and approval while building a stronger academic ecosystem.",
   },
 ];
 

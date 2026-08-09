@@ -1,7 +1,7 @@
 import { apiClient } from "../client";
 import { Endpoints } from "../endpoints";
 import { Document, DocumentUploadPayload } from "../../types/document.types";
-import { PaginatedResponse } from "./courses.service";
+import { PaginatedResponse } from "./projects.service";
 
 export const DocumentsService = {
   getDocuments: async (

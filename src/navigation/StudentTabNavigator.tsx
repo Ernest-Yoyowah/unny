@@ -1,24 +1,27 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import { View, StyleSheet, Platform } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { StudentTabParamList } from "./types";
-import { StudentDashboardScreen } from "../screens/student/StudentDashboardScreen";
-import { SearchScreen } from "../screens/search/SearchScreen";
+
+import { StudentDashboardScreen } from "../screens/dashboard/StudentDashboard";
+import { MyProjectsScreen } from "../screens/project/MyProjectsScreen";
+import { SearchScreen } from "../screens/explorer/SearchScreen";
 import { ProfileScreen } from "../screens/profile/ProfileScreen";
-import { StudentCoursesScreen } from "../screens/student/StudentCoursesScreen";
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from "../theme";
+
+import { Colors, Typography, Spacing, Shadows } from "../theme";
 
 const Tab = createBottomTabNavigator<StudentTabParamList>();
 
-type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
+type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
 const TAB_CONFIG: {
   name: keyof StudentTabParamList;
   label: string;
-  icon: IoniconsName;
-  activeIcon: IoniconsName;
+  icon: IconName;
+  activeIcon: IconName;
 }[] = [
   {
     name: "StudentHome",
@@ -27,14 +30,14 @@ const TAB_CONFIG: {
     activeIcon: "home",
   },
   {
-    name: "StudentCourses",
-    label: "Courses",
-    icon: "book-outline",
-    activeIcon: "book",
+    name: "StudentProjects",
+    label: "Projects",
+    icon: "folder-outline",
+    activeIcon: "folder",
   },
   {
     name: "Search",
-    label: "Search",
+    label: "Explore",
     icon: "search-outline",
     activeIcon: "search",
   },
@@ -52,17 +55,23 @@ export const StudentTabNavigator: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
-        const config = TAB_CONFIG.find((c) => c.name === route.name);
+        const config = TAB_CONFIG.find((item) => item.name === route.name);
+
         return {
           headerShown: false,
+
           tabBarStyle: {
             ...styles.tabBar,
-            height: 56 + insets.bottom,
+            height: 58 + insets.bottom,
             paddingBottom: insets.bottom,
           },
+
           tabBarActiveTintColor: Colors.primary,
+
           tabBarInactiveTintColor: Colors.text.tertiary,
+
           tabBarLabelStyle: styles.tabLabel,
+
           tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name={
@@ -80,18 +89,33 @@ export const StudentTabNavigator: React.FC = () => {
       <Tab.Screen
         name="StudentHome"
         component={StudentDashboardScreen}
-        options={{ title: "Home" }}
+        options={{
+          title: "Home",
+        }}
       />
+
       <Tab.Screen
-        name="StudentCourses"
-        component={StudentCoursesScreen}
-        options={{ title: "Courses" }}
+        name="StudentProjects"
+        component={MyProjectsScreen}
+        options={{
+          title: "Projects",
+        }}
       />
-      <Tab.Screen name="Search" component={SearchScreen} />
+
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          title: "Explore",
+        }}
+      />
+
       <Tab.Screen
         name="StudentProfile"
         component={ProfileScreen}
-        options={{ title: "Profile" }}
+        options={{
+          title: "Profile",
+        }}
       />
     </Tab.Navigator>
   );
@@ -103,11 +127,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border.light,
     paddingTop: Spacing[1.5],
+
     ...Platform.select({
-      ios: Shadows.md,
-      android: { elevation: 8 },
+      ios: {
+        ...Shadows.md,
+      },
+      android: {
+        elevation: 8,
+      },
     }),
   },
+
   tabLabel: {
     fontSize: Typography.size.xs,
     fontWeight: Typography.weight.medium,
