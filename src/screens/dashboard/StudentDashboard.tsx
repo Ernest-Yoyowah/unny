@@ -139,14 +139,13 @@ export const StudentDashboardScreen: React.FC = () => {
             </AppText>
 
             <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("ProjectDetails", {
-                  projectId: project.id,
-                })
-              }
+              style={styles.addProjectButton}
+              onPress={() => navigation.navigate("AddProject")}
             >
-              <AppText variant="caption" color="accent" weight="medium">
-                View
+              <Ionicons name="add" size={16} color={Colors.primary} />
+
+              <AppText variant="caption" color="accent" weight="semibold">
+                Add Project
               </AppText>
             </TouchableOpacity>
           </View>

@@ -41,7 +41,7 @@ const SLIDES: Slide[] = [
     tagline: "VERIFIED COMMUNITY",
     title: "A trusted academic network.",
     description:
-      "Students, contributors, and institutions connect through verified identities, reducing misinformation and protecting academic work.",
+      "Students, Lecturers, and institutions connect through verified identities, reducing misinformation and protecting academic work.",
   },
   {
     id: "3",

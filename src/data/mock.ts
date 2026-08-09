@@ -23,7 +23,7 @@ export const MOCK_STUDENT: StudentProfile = {
   joinedAt: "2022-09-05T08:00:00Z",
   lastActiveAt: "2026-05-26T14:30:00Z",
   studentId: "GCTU/CS/2022/0047",
-  level: 300,
+  level: 400,
   department: "Computer Science",
   enrolledCourseIds: ["crs-g01", "crs-g02", "crs-g03", "crs-g04", "crs-g05"],
   pinnedCourseIds: ["crs-g01", "crs-g03"],

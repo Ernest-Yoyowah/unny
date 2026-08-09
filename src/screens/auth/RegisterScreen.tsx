@@ -32,7 +32,7 @@ const schema = z
 
     institutionCode: z.string().min(4, "Enter a valid institution code"),
 
-    role: z.enum(["student", "contributor"]),
+    role: z.enum(["student", "lecturer"]),
 
     password: z
       .string()
@@ -54,7 +54,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const { mutate: register, isPending, error } = useRegister();
 
-  const [selectedRole, setSelectedRole] = useState<"student" | "contributor">(
+  const [selectedRole, setSelectedRole] = useState<"student" | "lecturer">(
     "student",
   );
 
@@ -82,7 +82,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     register(values as any);
   };
 
-  const handleRoleSelect = (role: "student" | "contributor") => {
+  const handleRoleSelect = (role: "student" | "lecturer") => {
     setSelectedRole(role);
     setValue("role", role);
   };
@@ -146,7 +146,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             </AppText>
 
             <View style={styles.roleSelector}>
-              {(["student", "contributor"] as const).map((role) => (
+              {(["student", "lecturer"] as const).map((role) => (
                 <TouchableOpacity
                   key={role}
                   style={[
@@ -176,7 +176,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     color={selectedRole === role ? "primary" : "tertiary"}
                     style={styles.roleText}
                   >
-                    {role === "student" ? "Student" : "Contributor"}
+                    {role === "student" ? "Student" : "Lecturer"}
                   </AppText>
                 </TouchableOpacity>
               ))}

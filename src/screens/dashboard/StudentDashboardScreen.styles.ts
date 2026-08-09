@@ -258,4 +258,10 @@ export const styles = StyleSheet.create({
   footerSpace: {
     height: Spacing[5],
   },
+
+  addProjectButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[1],
+  },
 });

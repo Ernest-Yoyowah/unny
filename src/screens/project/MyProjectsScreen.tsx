@@ -1,16 +1,15 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText, Card, ProgressBar } from "../../components/ui";
-
-import { Colors, Spacing, BorderRadius, Shadows } from "../../theme";
-
+import { Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 import { MOCK_FINAL_YEAR_PROJECT } from "../../data/mock";
+import { styles } from "./MyProjectsScreen.styles";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
@@ -25,7 +24,9 @@ export const MyProjectsScreen: React.FC = () => {
       style={styles.container}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + Spacing[4] },
+        {
+          paddingTop: insets.top + Spacing[4],
+        },
       ]}
       showsVerticalScrollIndicator={false}
     >
@@ -45,7 +46,7 @@ export const MyProjectsScreen: React.FC = () => {
             <Ionicons
               name="folder-open-outline"
               size={24}
-              color={Colors.primary}
+              color={styles.icon.color}
             />
           </View>
 
@@ -65,7 +66,7 @@ export const MyProjectsScreen: React.FC = () => {
             <Ionicons
               name="school-outline"
               size={15}
-              color={Colors.text.secondary}
+              color={styles.metaIcon.color}
             />
 
             <AppText variant="caption" color="secondary">
@@ -77,7 +78,7 @@ export const MyProjectsScreen: React.FC = () => {
             <Ionicons
               name="calendar-outline"
               size={15}
-              color={Colors.text.secondary}
+              color={styles.metaIcon.color}
             />
 
             <AppText variant="caption" color="secondary">
@@ -101,69 +102,92 @@ export const MyProjectsScreen: React.FC = () => {
         </View>
 
         <View style={styles.supervisor}>
-          <Ionicons name="person-outline" size={16} color={Colors.accent} />
+          <Ionicons
+            name="person-outline"
+            size={16}
+            color={styles.supervisorIcon.color}
+          />
 
           <AppText variant="body2">{project.supervisor.name}</AppText>
         </View>
       </Card>
 
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() =>
-            navigation.navigate("ProjectDocuments", {
-              projectId: project.id,
-            })
-          }
-        >
-          <Ionicons
-            name="document-text-outline"
-            size={22}
-            color={Colors.primary}
-          />
+      <View style={styles.section}>
+        <AppText variant="h5" weight="semibold" style={styles.sectionTitle}>
+          Project Workspace
+        </AppText>
 
-          <AppText variant="body2" weight="semibold">
-            Documents
-          </AppText>
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            activeOpacity={0.75}
+            style={styles.actionCard}
+            onPress={() =>
+              navigation.navigate("ProjectDocuments", {
+                projectId: project.id,
+              })
+            }
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons
+                name="document-text-outline"
+                size={21}
+                color={styles.actionIconGlyph.color}
+              />
+            </View>
 
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() =>
-            navigation.navigate("ProjectTimeline", {
-              projectId: project.id,
-            })
-          }
-        >
-          <Ionicons name="time-outline" size={22} color={Colors.primary} />
+            <AppText variant="body2" weight="semibold">
+              Documents
+            </AppText>
+          </TouchableOpacity>
 
-          <AppText variant="body2" weight="semibold">
-            Timeline
-          </AppText>
-        </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.75}
+            style={styles.actionCard}
+            onPress={() =>
+              navigation.navigate("ProjectTimeline", {
+                projectId: project.id,
+              })
+            }
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons
+                name="time-outline"
+                size={21}
+                color={styles.actionIconGlyph.color}
+              />
+            </View>
 
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() =>
-            navigation.navigate("ProjectDetails", {
-              projectId: project.id,
-            })
-          }
-        >
-          <Ionicons
-            name="information-circle-outline"
-            size={22}
-            color={Colors.primary}
-          />
+            <AppText variant="body2" weight="semibold">
+              Timeline
+            </AppText>
+          </TouchableOpacity>
 
-          <AppText variant="body2" weight="semibold">
-            Details
-          </AppText>
-        </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.75}
+            style={styles.actionCard}
+            onPress={() =>
+              navigation.navigate("ProjectDetails", {
+                projectId: project.id,
+              })
+            }
+          >
+            <View style={styles.actionIcon}>
+              <Ionicons
+                name="information-circle-outline"
+                size={21}
+                color={styles.actionIconGlyph.color}
+              />
+            </View>
+
+            <AppText variant="body2" weight="semibold">
+              Details
+            </AppText>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.section}>
-        <AppText variant="h5" weight="semibold">
+        <AppText variant="h5" weight="semibold" style={styles.sectionTitle}>
           Project Overview
         </AppText>
 
@@ -173,112 +197,29 @@ export const MyProjectsScreen: React.FC = () => {
           </AppText>
         </Card>
       </View>
+
+      <View style={styles.section}>
+        <View style={styles.infoCard}>
+          <View style={styles.infoIcon}>
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={styles.infoIconGlyph.color}
+            />
+          </View>
+
+          <View style={styles.infoContent}>
+            <AppText variant="body2" weight="semibold">
+              Keep your project updated
+            </AppText>
+
+            <AppText variant="caption" color="secondary">
+              Upload your latest documents and keep your project information
+              current throughout your final year.
+            </AppText>
+          </View>
+        </View>
+      </View>
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
-  content: {
-    paddingHorizontal: Spacing[5],
-    paddingBottom: Spacing[12],
-  },
-
-  header: {
-    marginBottom: Spacing[6],
-  },
-
-  subtitle: {
-    marginTop: Spacing[2],
-  },
-
-  projectCard: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing[5],
-    ...Shadows.sm,
-  },
-
-  projectHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.primaryDim,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  status: {
-    backgroundColor: Colors.accentLight,
-    paddingHorizontal: Spacing[3],
-    paddingVertical: Spacing[1],
-    borderRadius: BorderRadius.full,
-  },
-
-  title: {
-    marginTop: Spacing[5],
-    lineHeight: 26,
-  },
-
-  meta: {
-    marginTop: Spacing[4],
-    gap: Spacing[2],
-  },
-
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing[2],
-  },
-
-  progressSection: {
-    marginTop: Spacing[5],
-  },
-
-  progressHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: Spacing[2],
-  },
-
-  supervisor: {
-    marginTop: Spacing[5],
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing[2],
-  },
-
-  actions: {
-    flexDirection: "row",
-    gap: Spacing[3],
-    marginTop: Spacing[5],
-  },
-
-  actionCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing[4],
-    alignItems: "center",
-    gap: Spacing[2],
-    ...Shadows.sm,
-  },
-
-  section: {
-    marginTop: Spacing[7],
-  },
-
-  abstractCard: {
-    marginTop: Spacing[3],
-    padding: Spacing[4],
-  },
-});

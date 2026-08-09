@@ -43,6 +43,8 @@ export type MainStackParamList = {
   Notifications: undefined;
   Settings: undefined;
 
+  AddProject: undefined;
+
   DocumentViewer: {
     documentId: string;
     courseId?: string;
