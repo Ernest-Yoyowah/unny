@@ -1,41 +1,100 @@
 import React, { useState } from "react";
+
 import {
   View,
   ScrollView,
   TouchableOpacity,
   TextInput,
   StatusBar,
+  Alert,
 } from "react-native";
+
+import * as DocumentPicker from "expo-document-picker";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { Ionicons } from "@expo/vector-icons";
+
 import { useNavigation } from "@react-navigation/native";
+
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AppText, Card } from "../../components/ui";
+
+import { AppText, Card, Button } from "../../components/ui";
+
+import {
+  useCreateProject,
+  useSubmitProject,
+} from "../../hooks/useSubmitProject";
+
+import { ProjectService } from "../../api/services/project.service";
+
+import { useAuthStore } from "../../store/auth.store";
+
+import { extractApiError } from "../../api/client";
+
+import { useProjectDirectory } from "../../hooks/useProjectWorkflow";
+
+import { useCreateTag, useTags } from "../../hooks/useTags";
+
 import { Colors, Spacing } from "../../theme";
+
 import { MainStackParamList } from "../../navigation/types";
+
 import { styles } from "./AddProjectScreen.styles";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
 export const AddProjectScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+
   const navigation = useNavigation<Nav>();
 
   const [title, setTitle] = useState("");
+
   const [abstract, setAbstract] = useState("");
-  const [supervisor, setSupervisor] = useState("");
+
   const [repositoryLink, setRepositoryLink] = useState("");
+
+  const [demoLink, setDemoLink] = useState("");
+
+  const [supervisorId, setSupervisorId] = useState<string>();
+
   const [technologies, setTechnologies] = useState<string[]>([]);
 
-  const technologyOptions = [
-    "React Native",
-    "React",
-    "Node.js",
-    "Python",
-    "Java",
-    "Machine Learning",
-    "Firebase",
-  ];
+  const [newTag, setNewTag] = useState("");
+
+  const [selectedFiles, setSelectedFiles] = useState<
+    DocumentPicker.DocumentPickerAsset[]
+  >([]);
+
+  const user = useAuthStore((state) => state.user);
+
+  const createProject = useCreateProject();
+
+  const submitProject = useSubmitProject();
+
+  const { data: tags = [] } = useTags();
+
+  const createTag = useCreateTag();
+
+  /*
+   * IMPORTANT:
+   *
+   * useProjectDirectory does NOT return { data }.
+   *
+   * It returns:
+   *
+   * {
+   *   students,
+   *   supervisors,
+   *   isLoading,
+   *   isError
+   * }
+   */
+
+  const directory = useProjectDirectory(user?.departmentId, {
+    supervisors: user?.role === "student",
+  });
 
   const toggleTechnology = (technology: string) => {
     setTechnologies((current) =>
@@ -45,12 +104,134 @@ export const AddProjectScreen: React.FC = () => {
     );
   };
 
+  const choosePdf = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+        multiple: true,
+      });
+
+      if (!result.canceled) {
+        const oversized = result.assets.find(
+          (file) => file.size && file.size > 20 * 1024 * 1024,
+        );
+
+        if (oversized) {
+          Alert.alert("File is too large", "Choose a PDF smaller than 20 MB.");
+
+          return;
+        }
+
+        setSelectedFiles(result.assets);
+      }
+    } catch (error) {
+      Alert.alert("Unable to choose PDF", extractApiError(error).message);
+    }
+  };
+
+  const submit = async () => {
+    const trimmedTitle = title.trim();
+
+    const trimmedAbstract = abstract.trim();
+
+    const trimmedRepositoryLink = repositoryLink.trim();
+
+    if (!trimmedTitle) {
+      Alert.alert(
+        "Complete your project",
+        "Enter a project title before submitting.",
+      );
+
+      return;
+    }
+
+    if (trimmedAbstract.length < 30) {
+      Alert.alert(
+        "Abstract is too short",
+        "Your abstract must be at least 30 characters long.",
+      );
+
+      return;
+    }
+
+    if (!user) {
+      Alert.alert(
+        "Session unavailable",
+        "Sign in again before submitting your project.",
+      );
+
+      return;
+    }
+
+    let stage = "project creation";
+
+    try {
+      const project = await createProject.mutateAsync({
+        title: trimmedTitle,
+
+        abstract: trimmedAbstract,
+
+        academicYear: new Date().getFullYear(),
+
+        department: user.departmentId ?? "",
+
+        repoUrl: trimmedRepositoryLink || undefined,
+
+        demoUrl: demoLink.trim() || undefined,
+
+        supervisorId,
+
+        tagIds: tags
+          .filter((tag) => technologies.includes(tag.name))
+          .map((tag) => tag.id),
+      });
+
+      if (selectedFiles.length > 0) {
+        stage = "PDF upload";
+
+        for (const file of selectedFiles) {
+          await ProjectService.uploadReport(project.id, {
+            uri: file.uri,
+
+            name: file.name || `project-report-${Date.now()}.pdf`,
+
+            mimeType: file.mimeType || "application/pdf",
+          });
+        }
+      }
+
+      stage = "review submission";
+
+      await submitProject.mutateAsync(project.id);
+
+      Alert.alert(
+        "Project submitted",
+        "Your project is now waiting for faculty review.",
+        [
+          {
+            text: "Done",
+
+            onPress: () =>
+              navigation.replace("ProjectDetails", {
+                projectId: project.id,
+              }),
+          },
+        ],
+      );
+    } catch (error) {
+      Alert.alert(`${stage} failed`, extractApiError(error).message);
+    }
+  };
+
+  const isSubmitting = createProject.isPending || submitProject.isPending;
+
   return (
     <View style={styles.outerContainer}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={Colors.primary}
-        translucent
+        translucent={false}
       />
 
       <View
@@ -142,7 +323,7 @@ export const AddProjectScreen: React.FC = () => {
               />
 
               <AppText variant="caption" color="tertiary">
-                Keep your abstract clear and concise.
+                Minimum 30 characters.
               </AppText>
             </View>
           </Card>
@@ -199,7 +380,7 @@ export const AddProjectScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.selectContent}>
-                  <AppText variant="body2">2026</AppText>
+                  <AppText variant="body2">{new Date().getFullYear()}</AppText>
 
                   <AppText variant="caption" color="secondary">
                     Final year submission
@@ -219,13 +400,59 @@ export const AddProjectScreen: React.FC = () => {
                 Supervisor
               </AppText>
 
-              <TextInput
-                value={supervisor}
-                onChangeText={setSupervisor}
-                placeholder="Enter supervisor name"
-                placeholderTextColor={Colors.text.tertiary}
-                style={styles.input}
-              />
+              {directory.isLoading && directory.supervisors.length === 0 && (
+                <AppText variant="caption" color="secondary">
+                  Loading available supervisors...
+                </AppText>
+              )}
+
+              {!directory.isLoading &&
+                directory.supervisors.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.selectField,
+
+                      supervisorId === item.id && styles.tagSelected,
+                    ]}
+                    onPress={() => setSupervisorId(item.id)}
+                  >
+                    <View style={styles.selectContent}>
+                      <AppText variant="body2">
+                        {item.fullName ??
+                          item.name ??
+                          item.email ??
+                          "Supervisor"}
+                      </AppText>
+
+                      <AppText variant="caption" color="secondary">
+                        {item.department ?? "Available supervisor"}
+                      </AppText>
+                    </View>
+
+                    <Ionicons
+                      name={
+                        supervisorId === item.id
+                          ? "checkmark-circle"
+                          : "chevron-forward"
+                      }
+                      size={18}
+                      color={Colors.primary}
+                    />
+                  </TouchableOpacity>
+                ))}
+
+              {!directory.isLoading && directory.supervisors.length === 0 && (
+                <AppText variant="caption" color="secondary">
+                  No supervisors available.
+                </AppText>
+              )}
+
+              {directory.isError && (
+                <AppText variant="caption" color="error">
+                  We could not load supervisors. Please try again.
+                </AppText>
+              )}
             </View>
           </Card>
         </View>
@@ -245,25 +472,55 @@ export const AddProjectScreen: React.FC = () => {
             </AppText>
 
             <View style={styles.tags}>
-              {technologyOptions.map((technology) => {
-                const selected = technologies.includes(technology);
+              {tags.map((tag) => {
+                const selected = technologies.includes(tag.name);
 
                 return (
                   <TouchableOpacity
-                    key={technology}
+                    key={tag.id}
                     style={[styles.tag, selected && styles.tagSelected]}
-                    onPress={() => toggleTechnology(technology)}
+                    onPress={() => toggleTechnology(tag.name)}
                   >
                     <AppText
                       variant="caption"
                       weight={selected ? "semibold" : "medium"}
                       style={selected ? styles.tagSelectedText : undefined}
                     >
-                      {technology}
+                      {tag.name}
                     </AppText>
                   </TouchableOpacity>
                 );
               })}
+            </View>
+
+            <View style={styles.newTagRow}>
+              <TextInput
+                value={newTag}
+                onChangeText={setNewTag}
+                placeholder="Create a new tag"
+                placeholderTextColor={Colors.text.tertiary}
+                style={[styles.input, styles.newTagInput]}
+              />
+
+              <Button
+                label="Add"
+                size="sm"
+                variant="outline"
+                isLoading={createTag.isPending}
+                onPress={async () => {
+                  if (!newTag.trim()) {
+                    return;
+                  }
+
+                  const tag = await createTag.mutateAsync({
+                    name: newTag.trim(),
+                  });
+
+                  setTechnologies((current) => [...current, tag.name]);
+
+                  setNewTag("");
+                }}
+              />
             </View>
           </Card>
         </View>
@@ -274,7 +531,11 @@ export const AddProjectScreen: React.FC = () => {
           </AppText>
 
           <Card style={styles.formCard}>
-            <TouchableOpacity style={styles.uploadBox}>
+            <TouchableOpacity
+              style={styles.uploadBox}
+              onPress={choosePdf}
+              activeOpacity={0.8}
+            >
               <View style={styles.uploadIcon}>
                 <Ionicons
                   name="cloud-upload-outline"
@@ -283,17 +544,35 @@ export const AddProjectScreen: React.FC = () => {
                 />
               </View>
 
-              <AppText variant="body2" weight="semibold">
-                Upload project report
+              <AppText variant="body2" weight="semibold" numberOfLines={1}>
+                {selectedFiles.length
+                  ? `${selectedFiles.length} PDF${
+                      selectedFiles.length === 1 ? "" : "s"
+                    } selected`
+                  : "Upload project reports"}
               </AppText>
 
               <AppText variant="caption" color="secondary">
-                PDF only · Maximum file size 20 MB
+                {selectedFiles.length
+                  ? selectedFiles.map((file) => file.name).join(", ")
+                  : "PDF only · Maximum file size 20 MB each"}
               </AppText>
+
+              {selectedFiles.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setSelectedFiles([])}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove selected PDFs"
+                >
+                  <AppText variant="caption" color="error" weight="semibold">
+                    Remove selected files
+                  </AppText>
+                </TouchableOpacity>
+              )}
 
               <View style={styles.uploadButton}>
                 <AppText variant="caption" weight="semibold" color="inverse">
-                  Choose PDF
+                  {selectedFiles.length ? "Change PDFs" : "Choose PDFs"}
                 </AppText>
               </View>
             </TouchableOpacity>
@@ -319,20 +598,41 @@ export const AddProjectScreen: React.FC = () => {
                 Optional. Add a GitHub, GitLab, or other repository link.
               </AppText>
             </View>
+
+            <View style={styles.field}>
+              <AppText variant="caption" weight="semibold">
+                Demo link
+              </AppText>
+
+              <TextInput
+                value={demoLink}
+                onChangeText={setDemoLink}
+                placeholder="https://your-demo-url.com"
+                placeholderTextColor={Colors.text.tertiary}
+                autoCapitalize="none"
+                keyboardType="url"
+                style={styles.input}
+              />
+            </View>
           </Card>
         </View>
 
-        <TouchableOpacity style={styles.submitButton}>
-          <Ionicons
-            name="paper-plane-outline"
-            size={18}
-            color={Colors.text.inverse}
-          />
-
-          <AppText variant="body2" weight="semibold" color="inverse">
-            Submit for Review
-          </AppText>
-        </TouchableOpacity>
+        <Button
+          variant="primary"
+          size="lg"
+          label="Submit for Review"
+          fullWidth
+          isLoading={isSubmitting}
+          onPress={submit}
+          leftIcon={
+            <Ionicons
+              name="paper-plane-outline"
+              size={18}
+              color={Colors.text.inverse}
+            />
+          }
+          style={styles.submitButton}
+        />
 
         <AppText variant="caption" color="tertiary" style={styles.submitNote}>
           Your project will remain pending until it has been reviewed by

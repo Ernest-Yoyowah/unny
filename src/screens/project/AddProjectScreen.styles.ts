@@ -159,6 +159,17 @@ export const styles = StyleSheet.create({
     gap: Spacing[2],
   },
 
+  newTagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+    marginTop: Spacing[4],
+  },
+
+  newTagInput: {
+    flex: 1,
+  },
+
   tag: {
     borderWidth: 1,
     borderColor: Colors.border.light,

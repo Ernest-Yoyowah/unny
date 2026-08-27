@@ -2,6 +2,21 @@ import { apiClient } from "../client";
 import { Endpoints } from "../endpoints";
 import { Project } from "./project.service";
 
+export interface ProjectUserProfile {
+  id?: string;
+  userId?: string;
+  fullName?: string;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  department?: string | null;
+  faculty?: string | null;
+  phone?: string | null;
+  matricNumber?: string | null;
+  level?: string | null;
+  staffId?: string | null;
+  specialization?: string | null;
+}
+
 export interface ProjectUser {
   id: string;
   fullName?: string;
@@ -10,13 +25,24 @@ export interface ProjectUser {
   department?: string;
   departmentId?: string;
   role?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   specialization?: string;
   level?: string;
+  profile?: ProjectUserProfile;
 }
 
-interface RawUser extends ProjectUser {
-  profile?: ProjectUser;
+interface RawUser {
+  id: string;
+  fullName?: string | null;
+  name?: string | null;
+  email?: string | null;
+  department?: string | null;
+  departmentId?: string | null;
+  role?: string | null;
+  avatarUrl?: string | null;
+  specialization?: string | null;
+  level?: string | null;
+  profile?: ProjectUserProfile | null;
 }
 
 export interface Collaboration {
@@ -50,19 +76,20 @@ export interface ProjectReview {
 }
 
 const normalizeUser = (user: RawUser): ProjectUser => {
-  const profile = user.profile;
+  const profile = user.profile ?? undefined;
 
   return {
     id: user.id,
-    fullName: user.fullName ?? user.name ?? profile?.fullName ?? profile?.name,
-    name: user.name ?? profile?.name,
-    email: user.email ?? profile?.email,
-    department: user.department ?? profile?.department,
-    departmentId: user.departmentId ?? profile?.departmentId,
-    role: user.role ?? profile?.role,
-    avatarUrl: user.avatarUrl ?? profile?.avatarUrl,
-    specialization: user.specialization ?? profile?.specialization,
-    level: user.level ?? profile?.level,
+    fullName: user.fullName ?? profile?.fullName ?? user.name ?? undefined,
+    name: user.name ?? profile?.fullName ?? user.fullName ?? undefined,
+    email: user.email ?? undefined,
+    department: user.department ?? profile?.department ?? undefined,
+    departmentId: user.departmentId ?? undefined,
+    role: user.role ?? undefined,
+    avatarUrl: user.avatarUrl ?? profile?.avatarUrl ?? null,
+    specialization: user.specialization ?? profile?.specialization ?? undefined,
+    level: user.level ?? profile?.level ?? undefined,
+    profile,
   };
 };
 
@@ -81,35 +108,13 @@ const unwrap = <T>(value: T | { data: T } | { projects: T }): T => {
 const unwrapList = <T>(
   value:
     | T[]
-    | {
-        data:
-          | T[]
-          | {
-              items?: T[];
-              users?: {
-                items?: T[];
-              };
-              projects?: {
-                items?: T[];
-              };
-            };
-      }
+    | { data: T[] }
+    | { data: { items: T[] } }
+    | { data: { users: T[] | { items: T[] } } }
     | { items: T[] }
     | { results: T[] }
-    | {
-        users:
-          | T[]
-          | {
-              items?: T[];
-            };
-      }
-    | {
-        projects:
-          | T[]
-          | {
-              items?: T[];
-            };
-      },
+    | { users: T[] }
+    | { users: { items: T[] } },
 ): T[] => {
   if (Array.isArray(value)) {
     return value;
@@ -129,25 +134,12 @@ const unwrapList = <T>(
     }
 
     if (
-      value.users &&
       typeof value.users === "object" &&
+      value.users !== null &&
+      "items" in value.users &&
       Array.isArray(value.users.items)
     ) {
       return value.users.items;
-    }
-  }
-
-  if ("projects" in value) {
-    if (Array.isArray(value.projects)) {
-      return value.projects;
-    }
-
-    if (
-      value.projects &&
-      typeof value.projects === "object" &&
-      Array.isArray(value.projects.items)
-    ) {
-      return value.projects.items;
     }
   }
 
@@ -156,25 +148,33 @@ const unwrapList = <T>(
       return value.data;
     }
 
-    if (value.data && typeof value.data === "object") {
-      if ("items" in value.data && Array.isArray(value.data.items)) {
-        return value.data.items;
+    if (
+      typeof value.data === "object" &&
+      value.data !== null &&
+      "items" in value.data &&
+      Array.isArray(value.data.items)
+    ) {
+      return value.data.items;
+    }
+
+    if (
+      typeof value.data === "object" &&
+      value.data !== null &&
+      "users" in value.data
+    ) {
+      const users = value.data.users;
+
+      if (Array.isArray(users)) {
+        return users;
       }
 
       if (
-        "users" in value.data &&
-        value.data.users &&
-        Array.isArray(value.data.users.items)
+        typeof users === "object" &&
+        users !== null &&
+        "items" in users &&
+        Array.isArray(users.items)
       ) {
-        return value.data.users.items;
-      }
-
-      if (
-        "projects" in value.data &&
-        value.data.projects &&
-        Array.isArray(value.data.projects.items)
-      ) {
-        return value.data.projects.items;
+        return users.items;
       }
     }
   }
@@ -231,11 +231,7 @@ export const ProjectWorkflowService = {
       data as
         | ProjectReview[]
         | { data: ProjectReview[] }
-        | {
-            data: {
-              items: ProjectReview[];
-            };
-          }
+        | { data: { items: ProjectReview[] } }
         | { items: ProjectReview[] },
     );
 
@@ -269,11 +265,7 @@ export const ProjectWorkflowService = {
       data as
         | Collaboration[]
         | { data: Collaboration[] }
-        | {
-            data: {
-              items: Collaboration[];
-            };
-          }
+        | { data: { items: Collaboration[] } }
         | { items: Collaboration[] },
     );
 
@@ -332,21 +324,15 @@ export const ProjectWorkflowService = {
   getSupervisionRequests: async (): Promise<SupervisionRequest[]> => {
     const { data } = await apiClient.get("/supervision-requests/mine");
 
-    return unwrapList(
+    const requests = unwrapList(
       data as
         | SupervisionRequest[]
-        | {
-            data: SupervisionRequest[];
-          }
-        | {
-            data: {
-              items: SupervisionRequest[];
-            };
-          }
-        | {
-            items: SupervisionRequest[];
-          },
-    ).map((request) => {
+        | { data: SupervisionRequest[] }
+        | { data: { items: SupervisionRequest[] } }
+        | { items: SupervisionRequest[] },
+    );
+
+    return requests.map((request) => {
       const supervisor = request.supervisor as RawUser | undefined;
 
       const requester = request.requester as RawUser | undefined;
@@ -382,35 +368,13 @@ export const ProjectWorkflowService = {
     const users = unwrapList(
       data as
         | RawUser[]
-        | {
-            data: {
-              users: {
-                items: RawUser[];
-              };
-            };
-          }
-        | {
-            data: RawUser[];
-          }
-        | {
-            data: {
-              items: RawUser[];
-            };
-          }
-        | {
-            items: RawUser[];
-          }
-        | {
-            results: RawUser[];
-          }
-        | {
-            users: {
-              items: RawUser[];
-            };
-          }
-        | {
-            users: RawUser[];
-          },
+        | { data: RawUser[] }
+        | { data: { items: RawUser[] } }
+        | { data: { users: RawUser[] | { items: RawUser[] } } }
+        | { items: RawUser[] }
+        | { results: RawUser[] }
+        | { users: RawUser[] }
+        | { users: { items: RawUser[] } },
     );
 
     return users.map(normalizeUser);

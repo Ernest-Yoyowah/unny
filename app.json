@@ -5,6 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#F5F7FA",
+      "translucent": false,
+      "hidden": false
+    },
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#1C2B4A"

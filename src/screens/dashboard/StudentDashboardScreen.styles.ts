@@ -81,6 +81,8 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     marginTop: -Spacing[8],
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
   },
 
   content: {

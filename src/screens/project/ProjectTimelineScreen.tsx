@@ -1,18 +1,47 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppText, Card } from "../../components/ui";
+import { AppText, Card, EmptyState, ScreenSkeleton } from "../../components/ui";
 
 import { Colors, Spacing, BorderRadius, Shadows } from "../../theme";
 
-import { MOCK_FINAL_YEAR_PROJECT } from "../../data/mock";
+import { useProject } from "../../hooks/useProject";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { MainStackParamList } from "../../navigation/types";
+import {
+  getProjectMilestones,
+  getProjectProgress,
+} from "../../utils/project-progress";
 
-export const ProjectTimelineScreen: React.FC = () => {
+type Props = NativeStackScreenProps<MainStackParamList, "ProjectTimeline">;
+
+export const ProjectTimelineScreen: React.FC<Props> = ({
+  route,
+  navigation,
+}) => {
   const insets = useSafeAreaInsets();
-
-  const project = MOCK_FINAL_YEAR_PROJECT;
+  const {
+    data: project,
+    isLoading,
+    isError,
+    refetch,
+  } = useProject(route.params.projectId);
+  if (isLoading) return <ScreenSkeleton />;
+  if (isError)
+    return (
+      <EmptyState
+        icon="cloud-offline-outline"
+        title="Timeline unavailable"
+        description="We could not load this project timeline."
+        action={{ label: "Try again", onPress: () => refetch() }}
+      />
+    );
+  if (!project)
+    return <EmptyState icon="folder-open-outline" title="Project not found" />;
+  const progress = getProjectProgress(project);
+  const milestones = getProjectMilestones(project);
 
   return (
     <ScrollView
@@ -26,6 +55,12 @@ export const ProjectTimelineScreen: React.FC = () => {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={22} color={Colors.text.primary} />
+        </TouchableOpacity>
         <AppText variant="h3" weight="bold">
           Timeline
         </AppText>
@@ -43,7 +78,7 @@ export const ProjectTimelineScreen: React.FC = () => {
             </AppText>
 
             <AppText variant="h4" weight="bold">
-              {project.progress}%
+              {progress}%
             </AppText>
           </View>
 
@@ -61,7 +96,7 @@ export const ProjectTimelineScreen: React.FC = () => {
             style={[
               styles.fill,
               {
-                width: `${project.progress}%`,
+                width: `${progress}%`,
               },
             ]}
           />
@@ -74,7 +109,7 @@ export const ProjectTimelineScreen: React.FC = () => {
         </AppText>
 
         <View style={styles.timeline}>
-          {project.milestones.map((item, index) => (
+          {milestones.map((item, index) => (
             <View key={index} style={styles.timelineItem}>
               <View style={styles.left}>
                 <View
@@ -92,7 +127,7 @@ export const ProjectTimelineScreen: React.FC = () => {
                   />
                 </View>
 
-                {index !== project.milestones.length - 1 && (
+                {index !== milestones.length - 1 && (
                   <View
                     style={[
                       styles.line,
@@ -132,6 +167,16 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing[5],
     paddingBottom: Spacing[12],
+  },
+
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing[4],
   },
 
   header: {

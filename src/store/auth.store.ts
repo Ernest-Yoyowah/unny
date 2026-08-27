@@ -2,7 +2,7 @@ import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { User } from "../types/user.types";
 import { AuthTokens } from "../types/auth.types";
-import { SECURE_STORE_KEYS } from "../api/client";
+import { SECURE_STORE_KEYS, setAuthExpiredHandler } from "../api/client";
 
 interface AuthStore {
   user: User | null;
@@ -80,3 +80,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     );
   },
 }));
+
+setAuthExpiredHandler(() => {
+  void useAuthStore.getState().clearAuth();
+});

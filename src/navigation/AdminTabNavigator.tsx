@@ -8,7 +8,7 @@ import { ProfileScreen } from "../screens/profile/ProfileScreen";
 import { Colors, Typography, Spacing, Shadows } from "../theme";
 import { LecturerDashboardScreen } from "@/screens/dashboard/AdminDashboard";
 import { LecturerCoursesScreen } from "@/screens/moderation/PendingProjectsScreen";
-import { LecturerResourcesScreen } from "@/screens/moderation/ModerationQueueScreen";
+import { LecturerCoursesScreen as LecturerResourcesScreen } from "@/screens/moderation/PendingProjectsScreen";
 
 const Tab = createBottomTabNavigator<LecturerTabParamList>();
 

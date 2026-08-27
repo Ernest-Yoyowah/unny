@@ -1,529 +1,1068 @@
 import React, { useState } from "react";
 import {
-  View,
-  StyleSheet,
+  ActivityIndicator,
+  Alert,
   ScrollView,
+  StatusBar,
+  StyleSheet,
+  TextInput,
   TouchableOpacity,
-  SectionList,
+  View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import {
-  AppText,
-  Avatar,
-  Badge,
-  Divider,
-  SectionCard,
-} from "../../components/ui";
-import { MOCK_COURSES, MOCK_DOCUMENTS } from "../../data/mock";
-import { useAuthStore } from "../../store/auth.store";
-import { Colors, Spacing, BorderRadius, Typography } from "../../theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { AppText, Card, EmptyState, ScreenSkeleton } from "../../components/ui";
+import { BorderRadius, Colors, Shadows, Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
+import { useProject } from "../../hooks/useProject";
 import {
-  formatSemester,
-  formatCreditUnits,
-  formatEnrollmentCount,
-} from "../../utils/format.utils";
-import { Document, DocumentCategory } from "../../types/document.types";
-import { DocumentCard } from "@/components/document/ProjectDocumentCard";
+  useProjectActions,
+  useProjectCollaboratorActions,
+  useProjectCollaborators,
+  useProjectDirectory,
+  useProjectReviews,
+  useRespondToSupervision,
+  useSupervisionRequests,
+} from "../../hooks/useProjectWorkflow";
+import { useAuthStore } from "../../store/auth.store";
 
-type Props = NativeStackScreenProps<MainStackParamList, "CourseDetails">;
+type Props = NativeStackScreenProps<MainStackParamList, "ProjectDetails">;
 
-type TabId = "overview" | "resources";
-
-const categoryOrder: DocumentCategory[] = [
-  "announcement",
-  "lecture_note",
-  "assignment",
-  "past_question",
-  "textbook",
-  "supplementary",
-];
-
-const categoryLabels: Record<DocumentCategory, string> = {
-  announcement: "Announcements",
-  lecture_note: "Lecture Notes",
-  assignment: "Assignments",
-  past_question: "Past Questions",
-  textbook: "Textbooks",
-  supplementary: "Supplementary",
-};
-
-export const CourseDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { courseId } = route.params;
+export const ProjectDetailsScreen: React.FC<Props> = ({
+  route,
+  navigation,
+}) => {
+  const { projectId } = route.params;
   const insets = useSafeAreaInsets();
-  const user = useAuthStore((s) => s.user);
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
 
-  const course = MOCK_COURSES.find((c) => c.id === courseId);
-  if (!course) return null;
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState("");
+  const [abstract, setAbstract] = useState("");
+  const [comment, setComment] = useState("");
 
-  const documents = MOCK_DOCUMENTS.filter((d) => d.courseId === courseId);
-  const isLecturer = user?.role === "lecturer";
+  const currentUser = useAuthStore((state) => state.user);
 
-  const groupedDocuments = categoryOrder
-    .map((cat) => ({
-      category: cat,
-      title: categoryLabels[cat],
-      data: documents.filter((d) => d.category === cat),
-    }))
-    .filter((g) => g.data.length > 0);
+  const {
+    data: project,
+    isLoading,
+    isError,
+    refetch,
+  } = useProject(projectId, !isDeleting);
+
+  const actions = useProjectActions(projectId);
+
+  const { data: reviews = [] } = useProjectReviews(projectId, !isDeleting);
+
+  const { data: collaborators = [] } = useProjectCollaborators(
+    projectId,
+    !isDeleting,
+  );
+
+  const { data: supervisionRequests = [] } = useSupervisionRequests();
+
+  const respondToSupervision = useRespondToSupervision();
+
+  const directory = useProjectDirectory(project?.department, {
+    students: currentUser?.role === "student",
+    supervisors: currentUser?.role === "student",
+  });
+
+  const collaboratorActions = useProjectCollaboratorActions(projectId);
+
+  const canRespondToSupervision =
+    currentUser?.role === "lecturer" || currentUser?.role === "admin";
+
+  const beginEditing = () => {
+    if (!project || isDeleting) {
+      return;
+    }
+
+    setTitle(project.title);
+    setAbstract(project.abstract ?? "");
+    setIsEditing(true);
+  };
+
+  const saveChanges = async () => {
+    if (isDeleting) {
+      return;
+    }
+
+    try {
+      await actions.update.mutateAsync({
+        title: title.trim(),
+        abstract: abstract.trim(),
+      });
+
+      setIsEditing(false);
+
+      Alert.alert("Project updated", "Your project details have been saved.");
+    } catch (error) {
+      Alert.alert(
+        "Update failed",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    }
+  };
+
+  const addComment = async () => {
+    if (!comment.trim() || isDeleting) {
+      return;
+    }
+
+    try {
+      await actions.comment.mutateAsync(comment.trim());
+
+      setComment("");
+    } catch (error) {
+      Alert.alert(
+        "Comment failed",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    }
+  };
+
+  const confirmDelete = () => {
+    if (isDeleting || actions.remove.isPending) {
+      return;
+    }
+
+    Alert.alert(
+      "Delete project",
+      "This project and its associated data will be permanently deleted. This cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete project",
+          style: "destructive",
+          onPress: handleDelete,
+        },
+      ],
+    );
+  };
+
+  const handleDelete = async () => {
+    if (isDeleting || actions.remove.isPending) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await actions.remove.mutateAsync();
+
+      Alert.alert("Project deleted", "The project was successfully deleted.", [
+        {
+          text: "OK",
+          onPress: () => navigation.goBack(),
+        },
+      ]);
+    } catch (error) {
+      setIsDeleting(false);
+
+      Alert.alert(
+        "Delete failed",
+        error instanceof Error
+          ? error.message
+          : "We could not delete the project. Please try again.",
+      );
+    }
+  };
+
+  if (isDeleting) {
+    return (
+      <View style={styles.deletingScreen}>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={Colors.background}
+        />
+
+        <View style={styles.deletingCard}>
+          <View style={styles.deletingIcon}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+
+          <AppText variant="h4" weight="bold" style={styles.deletingTitle}>
+            Deleting project
+          </AppText>
+
+          <AppText
+            variant="body2"
+            color="secondary"
+            style={styles.deletingDescription}
+          >
+            Please wait while we remove the project and update your project
+            list.
+          </AppText>
+        </View>
+      </View>
+    );
+  }
+
+  if (isLoading) {
+    return <ScreenSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <EmptyState
+        icon="cloud-offline-outline"
+        title="Project unavailable"
+        description="We could not load this project right now."
+        action={{
+          label: "Try again",
+          onPress: () => refetch(),
+        }}
+      />
+    );
+  }
+
+  if (!project) {
+    return (
+      <EmptyState
+        icon="search-outline"
+        title="Project not found"
+        description="This project may have been deleted or is no longer available."
+        action={{
+          label: "Go back",
+          onPress: () => navigation.goBack(),
+        }}
+      />
+    );
+  }
+
+  const availableStudents = directory.students.filter(
+    (student) =>
+      student.id !== currentUser?.id &&
+      !collaborators.some((collaborator) => collaborator.userId === student.id),
+  );
+
+  const availableSupervisors = directory.supervisors.filter(
+    (supervisor) =>
+      supervisor.id !== project.supervisor?.id &&
+      !supervisionRequests.some(
+        (request) =>
+          request.projectId === projectId &&
+          request.supervisorId === supervisor.id,
+      ),
+  );
+
+  const projectSupervisionRequests = supervisionRequests.filter(
+    (request) => request.projectId === projectId,
+  );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View
-        style={[styles.courseHeader, { backgroundColor: course.coverColor }]}
+    <View style={styles.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+
+      <ScrollView
+        style={[
+          styles.container,
+          {
+            paddingTop: insets.top,
+          },
+        ]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Go back"
-          accessibilityRole="button"
-        >
-          <Ionicons name="arrow-back" size={22} color="rgba(255,255,255,0.9)" />
-        </TouchableOpacity>
-
-        {isLecturer && (
+        <View style={styles.header}>
           <TouchableOpacity
-            style={styles.moreBtn}
-            accessibilityLabel="More options"
-            accessibilityRole="button"
+            disabled={isDeleting}
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
           >
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={22}
-              color="rgba(255,255,255,0.9)"
+            <Ionicons name="arrow-back" size={22} color={Colors.text.primary} />
+          </TouchableOpacity>
+
+          <View style={styles.iconBox}>
+            <Ionicons name="library-outline" size={28} color={Colors.primary} />
+          </View>
+
+          {isEditing ? (
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              style={styles.editTitle}
             />
-          </TouchableOpacity>
-        )}
+          ) : (
+            <AppText variant="h3" weight="bold" style={styles.title}>
+              {project.title}
+            </AppText>
+          )}
 
-        <View style={styles.courseHeaderContent}>
-          <AppText variant="overline" style={styles.courseCode}>
-            {course.code}
-          </AppText>
-          <AppText
-            variant="h3"
-            weight="bold"
-            style={styles.courseTitle}
-            numberOfLines={3}
-          >
-            {course.title}
-          </AppText>
-
-          <View style={styles.lecturerRow}>
-            <Avatar name={course.lecturerName} size="xs" />
-            <AppText variant="caption" style={styles.lecturerText}>
-              {course.lecturerTitle} {course.lecturerName}
+          <View style={styles.status}>
+            <AppText variant="caption" color="accent" weight="semibold">
+              {project.status}
             </AppText>
           </View>
         </View>
 
-        <View style={styles.courseStats}>
-          <View style={styles.statItem}>
-            <AppText variant="h5" weight="bold" style={styles.statValue}>
-              {formatEnrollmentCount(course.enrollmentCount)}
-            </AppText>
-            <AppText variant="caption" style={styles.statLabel}>
-              Students
-            </AppText>
+        <Card style={styles.card}>
+          <AppText variant="h5" weight="semibold">
+            Project Information
+          </AppText>
+
+          <View style={styles.infoList}>
+            <InfoRow
+              icon="person-outline"
+              label="Student"
+              value={project.submittedBy?.fullName}
+            />
+
+            <InfoRow
+              icon="school-outline"
+              label="Department"
+              value={project.department}
+            />
+
+            <InfoRow
+              icon="book-outline"
+              label="Programme"
+              value="BSc Final Year Project"
+            />
+
+            <InfoRow
+              icon="calendar-outline"
+              label="Year"
+              value={project.academicYear?.toString()}
+            />
+
+            <InfoRow
+              icon="person-circle-outline"
+              label="Supervisor"
+              value={project.supervisor?.fullName ?? project.supervisor?.name}
+            />
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <AppText variant="h5" weight="bold" style={styles.statValue}>
-              {course.resourceCount}
-            </AppText>
-            <AppText variant="caption" style={styles.statLabel}>
-              Resources
-            </AppText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <AppText variant="h5" weight="bold" style={styles.statValue}>
-              {course.creditUnits}
-            </AppText>
-            <AppText variant="caption" style={styles.statLabel}>
-              Credits
-            </AppText>
-          </View>
-        </View>
-      </View>
+        </Card>
 
-      <View style={styles.tabRow}>
-        {(["overview", "resources"] as TabId[]).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === tab }}
-          >
-            <AppText
-              variant="body2"
-              weight={activeTab === tab ? "semibold" : "regular"}
-              color={activeTab === tab ? "primary" : "tertiary"}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </AppText>
-            {activeTab === tab && <View style={styles.tabIndicator} />}
-          </TouchableOpacity>
-        ))}
-      </View>
-      <Divider />
+        <View style={styles.section}>
+          <AppText variant="h5" weight="semibold">
+            Abstract
+          </AppText>
 
-      {activeTab === "overview" ? (
-        <ScrollView
-          contentContainerStyle={styles.overviewContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <SectionCard>
-            <AppText
-              variant="label"
-              weight="semibold"
-              color="secondary"
-              style={styles.overviewLabel}
-            >
-              About this Course
-            </AppText>
-            <AppText
-              variant="body2"
-              color="secondary"
-              style={styles.overviewText}
-            >
-              {course.description}
-            </AppText>
-          </SectionCard>
-
-          <SectionCard style={styles.overviewCard}>
-            <AppText
-              variant="label"
-              weight="semibold"
-              color="secondary"
-              style={styles.overviewLabel}
-            >
-              Course Information
-            </AppText>
-            {[
-              { label: "Academic Year", value: course.academicYear },
-              { label: "Semester", value: formatSemester(course.semester) },
-              { label: "Department", value: course.department },
-              {
-                label: "Credit Units",
-                value: formatCreditUnits(course.creditUnits),
-              },
-            ].map((item, index) => (
-              <View key={item.label}>
-                <View style={styles.infoRow}>
-                  <AppText variant="body2" color="tertiary">
-                    {item.label}
-                  </AppText>
-                  <AppText variant="body2" weight="medium">
-                    {item.value}
-                  </AppText>
-                </View>
-                {index < 3 && <Divider spacing={Spacing[3]} />}
-              </View>
-            ))}
-          </SectionCard>
-
-          {course.schedule && course.schedule.length > 0 && (
-            <SectionCard style={styles.overviewCard}>
-              <AppText
-                variant="label"
-                weight="semibold"
-                color="secondary"
-                style={styles.overviewLabel}
-              >
-                Class Schedule
+          <Card style={styles.card}>
+            {isEditing ? (
+              <TextInput
+                value={abstract}
+                onChangeText={setAbstract}
+                multiline
+                style={styles.editAbstract}
+              />
+            ) : (
+              <AppText variant="body2" color="secondary">
+                {project.abstract || "No abstract provided."}
               </AppText>
-              {course.schedule.map((s, index) => (
-                <View key={index}>
-                  <View style={styles.scheduleRow}>
-                    <View style={styles.scheduleDayBadge}>
-                      <AppText
-                        variant="caption"
-                        weight="semibold"
-                        color="accent"
-                      >
-                        {s.day.slice(0, 3).toUpperCase()}
-                      </AppText>
-                    </View>
-                    <View style={styles.scheduleInfo}>
-                      <AppText variant="body2" weight="medium">
-                        {s.startTime} — {s.endTime}
-                      </AppText>
-                      <AppText
-                        variant="caption"
-                        color="tertiary"
-                        numberOfLines={1}
-                      >
-                        {s.venue}
-                      </AppText>
-                    </View>
+            )}
+          </Card>
+        </View>
+
+        <View style={styles.section}>
+          <AppText variant="h5" weight="semibold">
+            People
+          </AppText>
+
+          <Card style={styles.card}>
+            <AppText variant="body2" weight="semibold">
+              Collaborators
+            </AppText>
+
+            {collaborators.length === 0 ? (
+              <AppText
+                variant="caption"
+                color="secondary"
+                style={styles.peopleHint}
+              >
+                No collaborators yet.
+              </AppText>
+            ) : (
+              collaborators.map((collaborator) => (
+                <View key={collaborator.id} style={styles.personRow}>
+                  <View style={styles.personDetails}>
+                    <AppText variant="body2">
+                      {collaborator.user?.fullName ??
+                        collaborator.user?.email ??
+                        collaborator.userId}
+                    </AppText>
+
+                    <AppText variant="caption" color="secondary">
+                      {collaborator.status}
+                    </AppText>
                   </View>
-                  {index < course.schedule!.length - 1 && (
-                    <Divider spacing={Spacing[3]} />
+
+                  {collaborator.status === "PENDING" &&
+                  collaborator.userId === currentUser?.id ? (
+                    <TouchableOpacity
+                      style={styles.smallAction}
+                      onPress={() =>
+                        collaboratorActions.respond.mutate({
+                          id: collaborator.id,
+                          status: "ACCEPTED",
+                        })
+                      }
+                    >
+                      <AppText
+                        variant="caption"
+                        color="accent"
+                        weight="semibold"
+                      >
+                        Accept
+                      </AppText>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() =>
+                        collaboratorActions.remove.mutate(collaborator.userId)
+                      }
+                    >
+                      <Ionicons
+                        name="remove-circle-outline"
+                        size={20}
+                        color={Colors.status.error}
+                      />
+                    </TouchableOpacity>
                   )}
                 </View>
-              ))}
-            </SectionCard>
-          )}
+              ))
+            )}
 
-          {!isLecturer && !course.isEnrolled && (
-            <TouchableOpacity
-              style={styles.enrollBtn}
-              onPress={() =>
-                navigation.navigate("EnrollmentFlow", { courseId: course.id })
-              }
-              accessibilityRole="button"
-            >
-              <AppText variant="body2" weight="semibold" color="inverse">
-                Enroll in this Course
-              </AppText>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      ) : (
-        <SectionList
-          sections={groupedDocuments}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.resourcesContent}
-          showsVerticalScrollIndicator={false}
-          renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <AppText variant="label" weight="semibold" color="secondary">
-                {section.title}
-              </AppText>
-              <Badge
-                label={String(section.data.length)}
-                variant="neutral"
-                size="sm"
-              />
-            </View>
-          )}
-          renderItem={({ item }) => (
-            <DocumentCard
-              document={item}
-              onPress={() =>
-                navigation.navigate("DocumentViewer", {
-                  documentId: item.id,
-                  courseId: item.courseId,
-                  title: item.title,
-                })
-              }
-            />
-          )}
-          ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
-          SectionSeparatorComponent={() => (
-            <View style={styles.sectionSeparator} />
-          )}
-          stickySectionHeadersEnabled={false}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyResources}>
-              <AppText variant="body2" color="tertiary">
-                No resources have been uploaded yet.
-              </AppText>
-            </View>
-          )}
-        />
-      )}
+            {currentUser?.role === "student" &&
+              availableStudents.length > 0 && (
+                <View style={styles.directorySection}>
+                  <AppText variant="caption" color="secondary">
+                    Students you can invite
+                  </AppText>
 
-      {isLecturer && activeTab === "resources" && (
-        <View
-          style={[styles.uploadFab, { bottom: insets.bottom + Spacing[6] }]}
-        >
+                  {availableStudents.map((student) => (
+                    <View key={student.id} style={styles.directoryRow}>
+                      <View style={styles.personDetails}>
+                        <AppText variant="body2">
+                          {student.fullName ??
+                            student.name ??
+                            student.email ??
+                            "Student"}
+                        </AppText>
+
+                        {student.department && (
+                          <AppText variant="caption" color="secondary">
+                            {student.department}
+                          </AppText>
+                        )}
+                      </View>
+
+                      <TouchableOpacity
+                        disabled={collaboratorActions.invite.isPending}
+                        style={styles.requestButton}
+                        onPress={() =>
+                          collaboratorActions.invite.mutate(student.id)
+                        }
+                      >
+                        {collaboratorActions.invite.isPending ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={Colors.primary}
+                          />
+                        ) : (
+                          <>
+                            <Ionicons
+                              name="person-add-outline"
+                              size={17}
+                              color={Colors.primary}
+                            />
+
+                            <AppText
+                              variant="caption"
+                              weight="semibold"
+                              color="accent"
+                            >
+                              Invite
+                            </AppText>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+            <View style={styles.peopleDivider} />
+
+            <AppText variant="body2" weight="semibold">
+              Supervisor
+            </AppText>
+
+            {project.supervisor ? (
+              <View style={styles.personRow}>
+                <View style={styles.personDetails}>
+                  <AppText variant="body2">
+                    {project.supervisor.fullName ??
+                      project.supervisor.name ??
+                      "Supervisor"}
+                  </AppText>
+
+                  <AppText variant="caption" color="success">
+                    Assigned
+                  </AppText>
+                </View>
+              </View>
+            ) : (
+              <>
+                {availableSupervisors.length === 0 && (
+                  <AppText
+                    variant="caption"
+                    color="secondary"
+                    style={styles.peopleHint}
+                  >
+                    No supervisors available for this department.
+                  </AppText>
+                )}
+
+                {availableSupervisors.map((supervisor) => (
+                  <View key={supervisor.id} style={styles.directoryRow}>
+                    <View style={styles.personDetails}>
+                      <AppText variant="body2">
+                        {supervisor.fullName ??
+                          supervisor.name ??
+                          supervisor.email ??
+                          "Supervisor"}
+                      </AppText>
+
+                      {supervisor.department && (
+                        <AppText variant="caption" color="secondary">
+                          {supervisor.department}
+                        </AppText>
+                      )}
+                    </View>
+
+                    <TouchableOpacity
+                      disabled={collaboratorActions.supervise.isPending}
+                      style={styles.requestButton}
+                      onPress={() =>
+                        collaboratorActions.supervise.mutate({
+                          supervisorId: supervisor.id,
+                          message: `Would you be willing to supervise ${project.title}?`,
+                        })
+                      }
+                    >
+                      {collaboratorActions.supervise.isPending ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={Colors.primary}
+                        />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="send-outline"
+                            size={17}
+                            color={Colors.primary}
+                          />
+
+                          <AppText
+                            variant="caption"
+                            weight="semibold"
+                            color="accent"
+                          >
+                            Request
+                          </AppText>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {projectSupervisionRequests.map((request) => (
+              <View key={request.id} style={styles.personRow}>
+                <View style={styles.personDetails}>
+                  <AppText variant="body2">
+                    {request.supervisor?.fullName ??
+                      request.supervisor?.name ??
+                      request.supervisorId}
+                  </AppText>
+
+                  <AppText variant="caption" color="secondary">
+                    Request status: {request.status}
+                  </AppText>
+                </View>
+
+                {canRespondToSupervision && request.status === "PENDING" && (
+                  <View style={styles.requestActions}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        respondToSupervision.mutate({
+                          id: request.id,
+                          status: "ACCEPTED",
+                        })
+                      }
+                    >
+                      <AppText
+                        variant="caption"
+                        color="success"
+                        weight="semibold"
+                      >
+                        Accept
+                      </AppText>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() =>
+                        respondToSupervision.mutate({
+                          id: request.id,
+                          status: "REJECTED",
+                        })
+                      }
+                    >
+                      <AppText
+                        variant="caption"
+                        color="error"
+                        weight="semibold"
+                      >
+                        Decline
+                      </AppText>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </Card>
+        </View>
+
+        <View style={styles.actionsRow}>
           <TouchableOpacity
-            style={styles.fabBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Upload resource"
+            disabled={isDeleting}
+            style={styles.actionButton}
+            onPress={() => actions.bookmark.mutate()}
           >
             <Ionicons
-              name="cloud-upload-outline"
-              size={20}
-              color={Colors.text.inverse}
+              name="bookmark-outline"
+              size={18}
+              color={Colors.primary}
             />
-            <AppText variant="body2" weight="semibold" color="inverse">
-              Upload
+
+            <AppText variant="caption" weight="semibold">
+              Bookmark
+            </AppText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            disabled={isDeleting}
+            style={styles.actionButton}
+            onPress={isEditing ? saveChanges : beginEditing}
+          >
+            <Ionicons
+              name={isEditing ? "checkmark-outline" : "create-outline"}
+              size={18}
+              color={Colors.primary}
+            />
+
+            <AppText variant="caption" weight="semibold">
+              {isEditing ? "Save changes" : "Edit project"}
+            </AppText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            disabled={isDeleting}
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={confirmDelete}
+          >
+            {actions.remove.isPending ? (
+              <ActivityIndicator size="small" color={Colors.status.error} />
+            ) : (
+              <Ionicons
+                name="trash-outline"
+                size={18}
+                color={Colors.status.error}
+              />
+            )}
+
+            <AppText variant="caption" color="error" weight="semibold">
+              {actions.remove.isPending ? "Deleting..." : "Delete"}
             </AppText>
           </TouchableOpacity>
         </View>
-      )}
+
+        <View style={styles.section}>
+          <AppText variant="h5" weight="semibold">
+            Discussion
+          </AppText>
+
+          <Card style={styles.card}>
+            <TextInput
+              value={comment}
+              onChangeText={setComment}
+              placeholder="Leave a comment for collaborators or your supervisor"
+              placeholderTextColor={Colors.text.tertiary}
+              multiline
+              style={styles.commentInput}
+            />
+
+            <TouchableOpacity style={styles.commentButton} onPress={addComment}>
+              <AppText variant="caption" color="inverse" weight="semibold">
+                Post comment
+              </AppText>
+            </TouchableOpacity>
+
+            {reviews.map((review) => (
+              <View key={review.id} style={styles.review}>
+                <AppText variant="caption" color="secondary">
+                  {review.action}
+                </AppText>
+
+                <AppText variant="body2">
+                  {review.comment || "Review recorded."}
+                </AppText>
+              </View>
+            ))}
+
+            {project.comments?.map((item) => (
+              <View key={item.id} style={styles.review}>
+                <AppText variant="caption" color="secondary">
+                  {item.author?.fullName ?? "Project participant"}
+                </AppText>
+
+                <AppText variant="body2">{item.body}</AppText>
+              </View>
+            ))}
+          </Card>
+        </View>
+
+        <View style={styles.section}>
+          <AppText variant="h5" weight="semibold">
+            Project Documents
+          </AppText>
+
+          <Card style={styles.card}>
+            {project.documents?.length ? (
+              project.documents.map((document) => (
+                <DocumentRow
+                  key={document.id}
+                  title={document.name ?? document.title ?? "Project document"}
+                  type={document.type ?? "FILE"}
+                  onPress={() =>
+                    navigation.navigate("DocumentViewer", {
+                      documentId: document.id,
+                      projectId,
+                      title:
+                        document.name ?? document.title ?? "Project document",
+                    })
+                  }
+                />
+              ))
+            ) : (
+              <AppText variant="body2" color="secondary">
+                No documents available.
+              </AppText>
+            )}
+          </Card>
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
+const InfoRow = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value?: string;
+}) => (
+  <View style={styles.infoRow}>
+    <Ionicons name={icon} size={18} color={Colors.accent} />
+
+    <View>
+      <AppText variant="caption" color="secondary">
+        {label}
+      </AppText>
+
+      <AppText variant="body2" weight="medium">
+        {value || "Not provided"}
+      </AppText>
+    </View>
+  </View>
+);
+
+const DocumentRow = ({
+  title,
+  type,
+  onPress,
+}: {
+  title: string;
+  type: string;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity style={styles.documentRow} onPress={onPress}>
+    <Ionicons name="document-text-outline" size={20} color={Colors.primary} />
+
+    <View style={styles.documentInfo}>
+      <AppText variant="body2">{title}</AppText>
+
+      <AppText variant="caption" color="secondary">
+        {type}
+      </AppText>
+    </View>
+
+    <Ionicons name="download-outline" size={20} color={Colors.accent} />
+  </TouchableOpacity>
+);
+
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
-  courseHeader: {
-    paddingBottom: Spacing[5],
+
+  content: {
+    padding: Spacing[5],
+    paddingBottom: Spacing[12],
   },
-  backBtn: {
-    margin: Spacing[4],
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    alignItems: "center",
+
+  header: {
+    marginBottom: Spacing[6],
+  },
+
+  iconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.primaryDim,
     justifyContent: "center",
-  },
-  moreBtn: {
-    position: "absolute",
-    top: Spacing[4],
-    right: Spacing[4],
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
-    justifyContent: "center",
   },
-  courseHeaderContent: {
-    paddingHorizontal: Spacing[5],
-    gap: Spacing[2],
-  },
-  courseCode: {
-    color: "rgba(255,255,255,0.7)",
-    letterSpacing: 1.5,
-  },
-  courseTitle: {
-    color: Colors.text.inverse,
+
+  title: {
+    marginTop: Spacing[4],
     lineHeight: 32,
   },
-  lecturerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing[2],
-    marginTop: Spacing[1],
-  },
-  lecturerText: {
-    color: "rgba(255,255,255,0.8)",
-  },
-  courseStats: {
-    flexDirection: "row",
-    marginTop: Spacing[5],
-    marginHorizontal: Spacing[5],
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: BorderRadius.xl,
-    paddingVertical: Spacing[4],
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 2,
-  },
-  statValue: {
-    color: Colors.text.inverse,
-  },
-  statLabel: {
-    color: "rgba(255,255,255,0.65)",
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    marginVertical: Spacing[2],
-  },
-  tabRow: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing[5],
-    backgroundColor: Colors.surface,
-  },
-  tab: {
-    paddingVertical: Spacing[4],
+
+  status: {
+    alignSelf: "flex-start",
+    marginTop: Spacing[3],
+    backgroundColor: Colors.accentLight,
     paddingHorizontal: Spacing[3],
-    position: "relative",
-    marginRight: Spacing[2],
+    paddingVertical: Spacing[1],
+    borderRadius: BorderRadius.full,
   },
-  tabActive: {},
-  tabIndicator: {
-    position: "absolute",
-    bottom: 0,
-    left: Spacing[3],
-    right: Spacing[3],
-    height: 2,
-    backgroundColor: Colors.primary,
-    borderRadius: 1,
-  },
-  overviewContent: {
+
+  card: {
     padding: Spacing[5],
+    borderRadius: BorderRadius.xl,
+    ...Shadows.sm,
+  },
+
+  section: {
+    marginTop: Spacing[7],
+  },
+
+  infoList: {
+    marginTop: Spacing[5],
     gap: Spacing[4],
-    paddingBottom: Spacing[10],
   },
-  overviewCard: {
-    gap: 0,
-  },
-  overviewLabel: {
-    marginBottom: Spacing[3],
-  },
-  overviewText: {
-    lineHeight: 22,
-  },
+
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: Spacing[1],
+    gap: Spacing[3],
   },
-  scheduleRow: {
+
+  documentRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing[3],
-    paddingVertical: Spacing[1],
+    paddingVertical: Spacing[3],
   },
-  scheduleDayBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.accentLight,
+
+  documentInfo: {
+    flex: 1,
+  },
+
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surface,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing[4],
+  },
+
+  editTitle: {
+    marginTop: Spacing[4],
+    borderWidth: 1,
+    borderColor: Colors.border.strong,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing[3],
+    color: Colors.text.primary,
+    fontSize: 24,
+    fontWeight: "700",
+  },
+
+  editAbstract: {
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing[3],
+    color: Colors.text.primary,
+    textAlignVertical: "top",
+  },
+
+  actionsRow: {
+    flexDirection: "row",
+    gap: Spacing[2],
+    marginTop: Spacing[6],
+  },
+
+  actionButton: {
+    flex: 1,
+    minHeight: 54,
     alignItems: "center",
     justifyContent: "center",
+    gap: Spacing[1],
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surface,
   },
-  scheduleInfo: {
-    flex: 1,
-    gap: 2,
+
+  deleteButton: {
+    borderColor: Colors.status.errorBorder,
+    backgroundColor: Colors.status.errorLight,
   },
-  enrollBtn: {
+
+  commentInput: {
+    minHeight: 84,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing[3],
+    color: Colors.text.primary,
+    textAlignVertical: "top",
+  },
+
+  commentButton: {
+    alignSelf: "flex-end",
+    marginTop: Spacing[3],
+    paddingHorizontal: Spacing[4],
+    paddingVertical: Spacing[3],
+    borderRadius: BorderRadius.lg,
     backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.xl,
-    paddingVertical: Spacing[4],
-    alignItems: "center",
+  },
+
+  review: {
+    marginTop: Spacing[4],
+    paddingTop: Spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
+    gap: Spacing[1],
+  },
+
+  peopleHint: {
+    marginTop: Spacing[2],
+  },
+
+  directorySection: {
     marginTop: Spacing[4],
   },
-  resourcesContent: {
-    padding: Spacing[5],
-    paddingBottom: Spacing[20],
-  },
-  sectionHeader: {
+
+  personRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing[3],
-    marginTop: Spacing[2],
+    marginTop: Spacing[3],
+    paddingVertical: Spacing[2],
   },
-  itemSeparator: {
-    height: Spacing[3],
+
+  personDetails: {
+    flex: 1,
+    gap: Spacing[1],
   },
-  sectionSeparator: {
-    height: Spacing[5],
-  },
-  emptyResources: {
-    padding: Spacing[8],
-    alignItems: "center",
-  },
-  uploadFab: {
-    position: "absolute",
-    right: Spacing[5],
-  },
-  fabBtn: {
+
+  directoryRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing[2],
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing[5],
+    justifyContent: "space-between",
+    marginTop: Spacing[2],
     paddingVertical: Spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
+  },
+
+  requestButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[1],
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[2],
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+  },
+
+  smallAction: {
+    paddingHorizontal: Spacing[2],
+    paddingVertical: Spacing[2],
+  },
+
+  peopleDivider: {
+    height: 1,
+    backgroundColor: Colors.border.light,
+    marginVertical: Spacing[5],
+  },
+
+  requestActions: {
+    flexDirection: "row",
+    gap: Spacing[3],
+    alignItems: "center",
+  },
+
+  deletingScreen: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing[6],
+  },
+
+  deletingCard: {
+    width: "100%",
+    maxWidth: 420,
+    padding: Spacing[7],
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surface,
+    alignItems: "center",
+    ...Shadows.sm,
+  },
+
+  deletingIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryDim,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  deletingTitle: {
+    marginTop: Spacing[5],
+    textAlign: "center",
+  },
+
+  deletingDescription: {
+    marginTop: Spacing[3],
+    textAlign: "center",
+    lineHeight: 22,
   },
 });

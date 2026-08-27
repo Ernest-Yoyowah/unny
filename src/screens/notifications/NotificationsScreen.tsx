@@ -10,7 +10,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, Badge, Divider, EmptyState } from "../../components/ui";
-import { MOCK_NOTIFICATIONS } from "../../data/mock";
+import {
+  useMarkNotificationRead,
+  useNotifications,
+} from "../../hooks/useNotifications";
 import { Colors, Spacing, BorderRadius, Typography } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 import { formatRelativeTime, formatDateGroup } from "../../utils/date.utils";
@@ -40,8 +43,8 @@ const NOTIFICATION_ICONS: Record<
   },
 };
 
-const groupNotificationsByDate = (notifications: typeof MOCK_NOTIFICATIONS) => {
-  const groups: Record<string, typeof MOCK_NOTIFICATIONS> = {};
+const groupNotificationsByDate = (notifications: Notification[]) => {
+  const groups: Record<string, Notification[]> = {};
   for (const n of notifications) {
     const key = formatDateGroup(n.createdAt);
     if (!groups[key]) groups[key] = [];
@@ -52,9 +55,12 @@ const groupNotificationsByDate = (notifications: typeof MOCK_NOTIFICATIONS) => {
 
 export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const { data } = useNotifications();
+  const markRead = useMarkNotificationRead();
+  const notifications = data?.data ?? [];
 
-  const sections = groupNotificationsByDate(MOCK_NOTIFICATIONS);
-  const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length;
+  const sections = groupNotificationsByDate(notifications);
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -101,6 +107,7 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
               style={[styles.notifItem, !item.isRead && styles.notifItemUnread]}
               activeOpacity={0.75}
               accessibilityRole="button"
+              onPress={() => !item.isRead && markRead.mutate(item.id)}
             >
               <View
                 style={[

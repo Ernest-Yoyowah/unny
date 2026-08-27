@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   View,
   StyleSheet,
   TouchableOpacity,
@@ -30,7 +31,11 @@ const schema = z
 
     email: z.string().email("Enter a valid institutional email address"),
 
-    institutionCode: z.string().min(4, "Enter a valid institution code"),
+    department: z.string().min(2, "Enter your department"),
+
+    matricNumber: z.string().optional(),
+
+    level: z.string().optional(),
 
     role: z.enum(["student", "lecturer"]),
 
@@ -69,7 +74,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     defaultValues: {
       fullName: "",
       email: "",
-      institutionCode: "",
+      department: "",
+      matricNumber: "",
+      level: "",
       role: "student",
       password: "",
       confirmPassword: "",
@@ -78,8 +85,12 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const apiError = error ? extractApiError(error) : null;
 
+  useEffect(() => {
+    if (apiError) Alert.alert("Registration failed", apiError.message);
+  }, [apiError]);
+
   const onSubmit = (values: FormValues) => {
-    register(values as any);
+    register(values);
   };
 
   const handleRoleSelect = (role: "student" | "lecturer") => {
@@ -220,21 +231,53 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
           <Controller
             control={control}
-            name="institutionCode"
+            name="department"
             render={({ field }) => (
               <Input
-                label="Institution Code"
-                placeholder="e.g. LEGON"
-                autoCapitalize="characters"
+                label="Department"
+                placeholder="Computer Science"
+                autoCapitalize="words"
                 value={field.value}
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
-                error={errors.institutionCode?.message}
-                hint="Provided by your institution"
+                error={errors.department?.message}
                 required
               />
             )}
           />
+
+          {selectedRole === "student" && (
+            <>
+              <Controller
+                control={control}
+                name="matricNumber"
+                render={({ field }) => (
+                  <Input
+                    label="Matriculation Number"
+                    placeholder="CSC/2021/001"
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    error={errors.matricNumber?.message}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="level"
+                render={({ field }) => (
+                  <Input
+                    label="Level"
+                    placeholder="400L"
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    error={errors.level?.message}
+                  />
+                )}
+              />
+            </>
+          )}
 
           <Controller
             control={control}

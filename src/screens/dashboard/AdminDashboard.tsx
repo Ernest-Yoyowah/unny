@@ -4,44 +4,29 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AppText, Avatar, Badge, Card, SectionCard } from "../../components/ui";
+import {
+  AppText,
+  Avatar,
+  Badge,
+  Card,
+  SectionCard,
+  ScreenSkeleton,
+} from "../../components/ui";
 import { useAuthStore } from "../../store/auth.store";
-import { MOCK_COURSES, MOCK_LECTURER, MOCK_DOCUMENTS } from "../../data/mock";
+import { useModerationQueue } from "../../hooks/useModerationQueue";
 import { Colors, Spacing, BorderRadius, Typography } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
-import { formatRelativeTime } from "../../utils/date.utils";
-import {
-  formatBytes,
-  getCategoryLabel,
-  getFileTypeIcon,
-} from "../../utils/format.utils";
-import { CourseCard } from "@/components/project/ProjectCard";
+import { ProjectRepositoryCard } from "@/components/project/ProjectRepositoryCard";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
 export const LecturerDashboardScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
-  const user = useAuthStore((s) => s.user) ?? MOCK_LECTURER;
+  const user = useAuthStore((s) => s.user);
+  const { data: reviewQueue = [], isLoading } = useModerationQueue();
 
-  const managedCourses = MOCK_COURSES.filter(
-    (c) => c.lecturerId === "usr-lec-001" && c.status === "active",
-  );
-  const archivedCourses = MOCK_COURSES.filter(
-    (c) => c.lecturerId === "usr-lec-001" && c.status === "archived",
-  );
-  const recentUploads = MOCK_DOCUMENTS.filter(
-    (d) => d.uploadedById === "usr-lec-001",
-  ).slice(0, 4);
-
-  const totalStudents = managedCourses.reduce(
-    (sum, c) => sum + c.enrollmentCount,
-    0,
-  );
-  const totalResources = managedCourses.reduce(
-    (sum, c) => sum + c.resourceCount,
-    0,
-  );
+  if (!user || isLoading) return <ScreenSkeleton />;
 
   const greeting = (() => {
     const hour = new Date().getHours();
@@ -67,12 +52,12 @@ export const LecturerDashboardScreen: React.FC = () => {
             numberOfLines={1}
             style={styles.headerName}
           >
-            {MOCK_LECTURER.title} {user.fullName.split(" ").slice(-1)[0]}
+            {user?.fullName}
           </AppText>
           <View style={styles.roleRow}>
             <Badge label="Lecturer" variant="primary" size="sm" />
             <AppText variant="caption" color="tertiary">
-              {MOCK_LECTURER.department}
+              {user?.departmentId ?? "Academic reviewer"}
             </AppText>
           </View>
         </View>
@@ -100,10 +85,10 @@ export const LecturerDashboardScreen: React.FC = () => {
             <Ionicons name="book-outline" size={18} color={Colors.accent} />
           </View>
           <AppText variant="h3" weight="bold">
-            {managedCourses.length}
+            {reviewQueue.length}
           </AppText>
           <AppText variant="caption" color="tertiary">
-            Active Courses
+            Pending Reviews
           </AppText>
         </Card>
         <Card style={styles.statCard} elevation="sm">
@@ -115,10 +100,10 @@ export const LecturerDashboardScreen: React.FC = () => {
             />
           </View>
           <AppText variant="h3" weight="bold">
-            {totalStudents}
+            {reviewQueue.filter((project) => project.submittedBy).length}
           </AppText>
           <AppText variant="caption" color="tertiary">
-            Enrolled Students
+            Submitted Projects
           </AppText>
         </Card>
         <Card style={styles.statCard} elevation="sm">
@@ -130,10 +115,13 @@ export const LecturerDashboardScreen: React.FC = () => {
             />
           </View>
           <AppText variant="h3" weight="bold">
-            {totalResources}
+            {reviewQueue.reduce(
+              (count, project) => count + (project.documents?.length ?? 0),
+              0,
+            )}
           </AppText>
           <AppText variant="caption" color="tertiary">
-            Resources
+            Attached Documents
           </AppText>
         </Card>
       </View>
@@ -194,21 +182,28 @@ export const LecturerDashboardScreen: React.FC = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <AppText variant="h5" weight="semibold">
-            Managed Courses
+            Projects Awaiting Review
           </AppText>
-          {archivedCourses.length > 0 && (
-            <AppText variant="caption" color="tertiary">
-              {archivedCourses.length} archived
-            </AppText>
-          )}
+          <AppText variant="caption" color="tertiary">
+            {reviewQueue.length} pending
+          </AppText>
         </View>
         <View style={styles.courseList}>
-          {managedCourses.map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
+          {reviewQueue.map((project) => (
+            <ProjectRepositoryCard
+              key={project.id}
+              project={{
+                id: project.id,
+                title: project.title,
+                department: project.department ?? "Department unavailable",
+                yearGroup:
+                  project.academicYear?.toString() ?? "Year unavailable",
+                status: project.status,
+                student: project.submittedBy?.fullName,
+                supervisor: project.supervisor?.fullName,
+              }}
               onPress={() =>
-                navigation.navigate("CourseDetails", { courseId: course.id })
+                navigation.navigate("ProjectDetails", { projectId: project.id })
               }
             />
           ))}
@@ -218,54 +213,49 @@ export const LecturerDashboardScreen: React.FC = () => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <AppText variant="h5" weight="semibold">
-            Recent Uploads
+            Review activity
           </AppText>
         </View>
         <SectionCard style={styles.uploadsCard}>
-          {recentUploads.map((doc, index) => (
-            <View key={doc.id}>
+          {reviewQueue.map((project, index) => (
+            <View key={project.id}>
               <TouchableOpacity
                 style={styles.uploadItem}
                 onPress={() =>
-                  navigation.navigate("DocumentViewer", {
-                    documentId: doc.id,
-                    courseId: doc.courseId,
-                    title: doc.title,
+                  navigation.navigate("ProjectDetails", {
+                    projectId: project.id,
                   })
                 }
                 activeOpacity={0.75}
               >
                 <View style={styles.uploadIcon}>
                   <Ionicons
-                    name={
-                      getFileTypeIcon(
-                        doc.fileType,
-                      ) as keyof typeof Ionicons.glyphMap
-                    }
+                    name="document-text-outline"
                     size={18}
                     color={Colors.accent}
                   />
                 </View>
                 <View style={styles.uploadContent}>
                   <AppText variant="body2" weight="medium" numberOfLines={1}>
-                    {doc.title}
+                    {project.title}
                   </AppText>
                   <View style={styles.uploadMeta}>
                     <AppText variant="caption" color="tertiary">
-                      {getCategoryLabel(doc.category)}
+                      {project.status}
                     </AppText>
                     <View style={styles.metaDot} />
                     <AppText variant="caption" color="tertiary">
-                      {doc.downloadCount} downloads
+                      {project.submittedBy?.fullName ??
+                        "Contributor unavailable"}
                     </AppText>
                     <View style={styles.metaDot} />
                     <AppText variant="caption" color="tertiary">
-                      {formatRelativeTime(doc.uploadedAt)}
+                      {project.academicYear ?? "Year unavailable"}
                     </AppText>
                   </View>
                 </View>
               </TouchableOpacity>
-              {index < recentUploads.length - 1 && (
+              {index < reviewQueue.length - 1 && (
                 <View style={styles.uploadDivider} />
               )}
             </View>

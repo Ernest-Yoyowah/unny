@@ -1,119 +1,56 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, Badge, EmptyState } from "../../components/ui";
-import { MOCK_COURSES } from "../../data/mock";
-import { Colors, Spacing, BorderRadius, Typography } from "../../theme";
+import { Colors, Spacing, BorderRadius } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
-import { CourseCard } from "@/components/project/ProjectCard";
+import { ProjectRepositoryCard } from "@/components/project/ProjectRepositoryCard";
+import { useModerationQueue } from "../../hooks/useModerationQueue";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
-
-const TABS = [
-  { id: "active", label: "Active" },
-  { id: "archived", label: "Archived" },
-] as const;
-
-type TabId = (typeof TABS)[number]["id"];
 
 export const LecturerCoursesScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
-  const [activeTab, setActiveTab] = useState<TabId>("active");
-
-  const courses = MOCK_COURSES.filter(
-    (c) => c.lecturerId === "usr-lec-001" && c.status === activeTab,
-  );
+  const { data: projects = [], isLoading } = useModerationQueue();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <AppText variant="h4" weight="bold">
-          My Courses
+          Review Queue
         </AppText>
-        <TouchableOpacity
-          style={styles.addBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Create new course"
-        >
-          <Ionicons name="add" size={22} color={Colors.text.inverse} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.tabBar}>
-        {TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[styles.tab, activeTab === tab.id && styles.tabActive]}
-            onPress={() => setActiveTab(tab.id)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === tab.id }}
-          >
-            <AppText
-              variant="body2"
-              weight={activeTab === tab.id ? "semibold" : "regular"}
-              color={activeTab === tab.id ? "primary" : "tertiary"}
-            >
-              {tab.label}
-            </AppText>
-            {MOCK_COURSES.filter(
-              (c) => c.lecturerId === "usr-lec-001" && c.status === tab.id,
-            ).length > 0 && (
-              <Badge
-                label={String(
-                  MOCK_COURSES.filter(
-                    (c) =>
-                      c.lecturerId === "usr-lec-001" && c.status === tab.id,
-                  ).length,
-                )}
-                variant={activeTab === tab.id ? "primary" : "neutral"}
-                size="sm"
-              />
-            )}
-          </TouchableOpacity>
-        ))}
       </View>
 
       <ScrollView
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       >
-        {courses.length === 0 ? (
+        {isLoading || projects.length === 0 ? (
           <EmptyState
-            icon={activeTab === "active" ? "book-outline" : "archive-outline"}
-            title={
-              activeTab === "active"
-                ? "No active courses"
-                : "No archived courses"
-            }
-            description={
-              activeTab === "active"
-                ? "Create your first course to get started."
-                : "Your archived course materials will appear here."
-            }
-            action={
-              activeTab === "active"
-                ? { label: "Create Course", onPress: () => {} }
-                : undefined
-            }
+            icon="checkmark-circle-outline"
+            title={isLoading ? "Loading review queue" : "Queue is clear"}
+            description="Projects awaiting your review will appear here."
           />
         ) : (
-          courses.map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
+          projects.map((project) => (
+            <ProjectRepositoryCard
+              key={project.id}
+              project={{
+                id: project.id,
+                title: project.title,
+                department: project.department ?? "Department unavailable",
+                yearGroup:
+                  project.academicYear?.toString() ?? "Year unavailable",
+                status: project.status,
+                student: project.submittedBy?.fullName,
+                supervisor: project.supervisor?.fullName,
+              }}
               onPress={() =>
-                activeTab === "archived"
-                  ? navigation.navigate("CourseArchive", {
-                      courseId: course.id,
-                      courseTitle: course.title,
-                    })
-                  : navigation.navigate("CourseDetails", {
-                      courseId: course.id,
-                    })
+                navigation.navigate("ProjectDetails", { projectId: project.id })
               }
             />
           ))

@@ -1,62 +1,25 @@
-import {
-  CoursesQueryParams,
-  CoursesService,
-} from "@/api/services/projects.service";
-import { CreateCoursePayload } from "@/types/project.types";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { ProjectService } from "../api/services/project.service";
 
-export const COURSES_KEY = "courses";
+export const PROJECTS_KEY = ["projects"];
 
-export const useCourses = (params?: CoursesQueryParams) =>
+export const useProject = (projectId: string, enabled = true) =>
   useQuery({
-    queryKey: [COURSES_KEY, "list", params],
-    queryFn: () => CoursesService.getCourses(params),
+    queryKey: [...PROJECTS_KEY, "detail", projectId],
+    queryFn: () => ProjectService.get(projectId),
+    enabled: Boolean(projectId) && enabled,
   });
 
-export const useCourse = (id: string) =>
+export const useExploreProjects = (
+  params?: Parameters<typeof ProjectService.explore>[0],
+) =>
   useQuery({
-    queryKey: [COURSES_KEY, "detail", id],
-    queryFn: () => CoursesService.getCourse(id),
-    enabled: !!id,
+    queryKey: [...PROJECTS_KEY, "explore", params],
+    queryFn: () => ProjectService.explore(params),
   });
 
-export const useCourseStudents = (id: string) =>
+export const useMyProjects = () =>
   useQuery({
-    queryKey: [COURSES_KEY, "students", id],
-    queryFn: () => CoursesService.getCourseStudents(id),
-    enabled: !!id,
+    queryKey: [...PROJECTS_KEY, "mine"],
+    queryFn: ProjectService.mine,
   });
-
-export const useCreateCourse = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: CreateCoursePayload) =>
-      CoursesService.createCourse(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [COURSES_KEY] }),
-  });
-};
-
-export const useArchiveCourse = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => CoursesService.archiveCourse(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [COURSES_KEY] }),
-  });
-};
-
-export const useEnrollCourse = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => CoursesService.enrollCourse(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [COURSES_KEY] }),
-  });
-};
-
-export const useTogglePinCourse = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, isPinned }: { id: string; isPinned: boolean }) =>
-      isPinned ? CoursesService.unpinCourse(id) : CoursesService.pinCourse(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [COURSES_KEY] }),
-  });
-};

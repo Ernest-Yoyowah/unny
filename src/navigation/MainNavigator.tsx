@@ -13,6 +13,8 @@ import { SettingsScreen } from "../screens/settings/SettingsScreen";
 import { DocumentViewerScreen } from "../screens/project/ProjectDocumentScreen";
 import { ProjectDetailsScreen } from "../screens/project/ProjectDetailsScreen";
 import { AddProjectScreen } from "@/screens/project/AddProjectScreen";
+import { ProjectTimelineScreen } from "../screens/project/ProjectTimelineScreen";
+import { SupervisionRequestsScreen } from "../screens/project/SupervisionRequestsScreen";
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -36,6 +38,11 @@ export const MainNavigator: React.FC = () => {
 
       <Stack.Screen name="ProjectDetails" component={ProjectDetailsScreen} />
       <Stack.Screen name="AddProject" component={AddProjectScreen} />
+      <Stack.Screen name="ProjectTimeline" component={ProjectTimelineScreen} />
+      <Stack.Screen
+        name="SupervisionRequests"
+        component={SupervisionRequestsScreen}
+      />
       {/* <Stack.Screen name="DocumentViewer" component={DocumentViewerScreen} /> */}
       {/* <Stack.Screen name="ProjectDocuments" component={} /> */}
 

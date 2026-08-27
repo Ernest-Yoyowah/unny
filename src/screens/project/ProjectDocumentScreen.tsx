@@ -10,8 +10,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, Divider, SectionCard, Button } from "../../components/ui";
-import { MOCK_DOCUMENTS } from "../../data/mock";
-import { useAuthStore } from "../../store/auth.store";
+import { ScreenSkeleton } from "../../components/ui";
+import { useProject } from "../../hooks/useProject";
 import { Colors, Spacing, BorderRadius, Typography } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 import { formatBytes } from "../../utils/format.utils";
@@ -24,10 +24,27 @@ export const DocumentViewerScreen: React.FC<Props> = ({
   route,
   navigation,
 }) => {
-  const { documentId, courseId, title } = route.params;
+  const { documentId, courseId, projectId, title } = route.params;
   const insets = useSafeAreaInsets();
+  const { data: project, isLoading } = useProject(projectId ?? courseId ?? "");
 
-  const document = MOCK_DOCUMENTS.find((d) => d.id === documentId);
+  const source = project?.documents?.find((item) => item.id === documentId);
+  const document = source
+    ? {
+        title: source.name ?? source.title ?? title,
+        description: undefined,
+        fileType: source.type ?? "file",
+        fileSize: 0,
+        uploadedAt:
+          project?.updatedAt ?? project?.createdAt ?? new Date().toISOString(),
+        downloadCount: 0,
+        downloadUrl: source.url,
+        category: "supplementary" as const,
+        week: undefined,
+      }
+    : undefined;
+
+  if (isLoading) return <ScreenSkeleton />;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

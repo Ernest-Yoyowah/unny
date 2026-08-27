@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
+  Alert,
   View,
   StyleSheet,
   TouchableOpacity,
@@ -46,6 +47,10 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   });
 
   const apiError = error ? extractApiError(error) : null;
+
+  useEffect(() => {
+    if (apiError) Alert.alert("Sign in failed", apiError.message);
+  }, [apiError]);
 
   const onSubmit = (values: FormValues) => {
     login(values);

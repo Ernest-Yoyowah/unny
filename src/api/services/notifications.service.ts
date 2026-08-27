@@ -16,10 +16,20 @@ export const NotificationsService = {
   },
 
   markRead: async (id: string): Promise<void> => {
-    await apiClient.post(Endpoints.notifications.markRead(id));
+    await apiClient.patch(Endpoints.notifications.markRead(id));
   },
 
   markAllRead: async (): Promise<void> => {
-    await apiClient.post(Endpoints.notifications.markAllRead);
+    await apiClient.patch(Endpoints.notifications.markAllRead);
+  },
+
+  registerDevice: async (token: string, platform: string): Promise<void> => {
+    await apiClient.post(Endpoints.notifications.devices, { token, platform });
+  },
+
+  unregisterDevice: async (token: string): Promise<void> => {
+    await apiClient.delete(Endpoints.notifications.devices, {
+      data: { token },
+    });
   },
 };

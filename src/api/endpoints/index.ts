@@ -7,6 +7,7 @@ export const Endpoints = {
     forgotPassword: "/auth/forgot-password",
     resetPassword: "/auth/reset-password",
     verifyEmail: "/auth/verify-email",
+    me: "/auth/me",
   },
 
   users: {
@@ -54,5 +55,46 @@ export const Endpoints = {
     detail: (id: string) => `/notifications/${id}`,
     markRead: (id: string) => `/notifications/${id}/read`,
     markAllRead: "/notifications/read-all",
+    devices: "/notifications/devices",
+  },
+
+  projects: {
+    create: "/projects",
+    detail: (id: string) => `/projects/${id}`,
+    update: (id: string) => `/projects/${id}`,
+    explore: "/projects/explore",
+    mine: "/projects/mine",
+    reviewQueue: "/projects/review-queue",
+    submit: (id: string) => `/projects/${id}/submit`,
+    delete: (id: string) => `/projects/${id}`,
+    comments: (id: string) => `/projects/${id}/comments`,
+    bookmark: (id: string) => `/projects/${id}/bookmark`,
+    bookmarks: "/projects/bookmarks",
+    reviews: (id: string) => `/projects/${id}/reviews`,
+    collaborators: (id: string) => `/projects/${id}/collaborators`,
+    supervision: (id: string) => `/projects/${id}/supervision-requests`,
+  },
+
+  collaborationInvites: {
+    respond: (id: string) => `/collaboration-invites/${id}`,
+  },
+
+  moderation: {
+    queue: "/moderation/queue",
+    review: (projectId: string) => `/moderation/${projectId}`,
+  },
+
+  tags: {
+    list: "/tags",
+    create: "/tags",
+  },
+
+  uploads: {
+    projectFile: "/uploads/project-file",
+    avatar: "/uploads/avatar",
+  },
+
+  explore: {
+    users: "/explore",
   },
 } as const;

@@ -1,6 +1,7 @@
 import React from "react";
 import {
   View,
+  Alert,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -19,16 +20,24 @@ import {
 import { useAuthStore } from "../../store/auth.store";
 import { Colors, Spacing, BorderRadius, Typography } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
+import { useLogout } from "../../hooks/useAuth";
 
 type Props = NativeStackScreenProps<MainStackParamList, "Settings">;
 
 export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const logout = useLogout();
 
-  const handleLogout = async () => {
-    await clearAuth();
+  const handleLogout = () => {
+    Alert.alert("Sign out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: () => logout.mutate(),
+      },
+    ]);
   };
 
   const SETTINGS_SECTIONS = [
@@ -233,6 +242,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             label="Sign Out"
             fullWidth
             onPress={handleLogout}
+            isLoading={logout.isPending}
             leftIcon={
               <Ionicons
                 name="log-out-outline"

@@ -4,28 +4,56 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { AppText, Avatar, Card, SectionCard } from "../../components/ui";
-import { useAuthStore } from "../../store/auth.store";
 import {
-  MOCK_STUDENT,
-  MOCK_NOTIFICATIONS,
-  MOCK_FINAL_YEAR_PROJECT,
-} from "../../data/mock";
+  AppText,
+  Avatar,
+  Card,
+  SectionCard,
+  EmptyState,
+  ScreenSkeleton,
+} from "../../components/ui";
+import { useAuthStore } from "../../store/auth.store";
+import { useMyProjects } from "../../hooks/useProject";
+import { useNotifications } from "../../hooks/useNotifications";
 import { Colors, Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 import { styles } from "./StudentDashboardScreen.styles";
+import { getProjectProgress } from "../../utils/project-progress";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
-
-const UNREAD_COUNT = MOCK_NOTIFICATIONS.filter((item) => !item.isRead).length;
 
 export const StudentDashboardScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
 
-  const user = useAuthStore((state) => state.user) ?? MOCK_STUDENT;
+  const user = useAuthStore((state) => state.user);
+  const { data: projects, isLoading: isProjectsLoading } = useMyProjects();
+  const { data: notificationPage } = useNotifications();
+  const project = projects?.[0];
+  const unreadCount =
+    notificationPage?.data.filter((item) => !item.isRead).length ?? 0;
 
-  const project = MOCK_FINAL_YEAR_PROJECT;
+  if (!user) {
+    return <ScreenSkeleton />;
+  }
+
+  if (isProjectsLoading) {
+    return <ScreenSkeleton />;
+  }
+
+  if (!project) {
+    return (
+      <EmptyState
+        icon="folder-open-outline"
+        title="No project yet"
+        description="Create your project to start building your workspace."
+        action={{
+          label: "Add Project",
+          onPress: () => navigation.navigate("AddProject"),
+        }}
+      />
+    );
+  }
 
   const greeting = (() => {
     const hour = new Date().getHours();
@@ -41,7 +69,7 @@ export const StudentDashboardScreen: React.FC = () => {
       <StatusBar
         barStyle="light-content"
         backgroundColor={Colors.primary}
-        translucent
+        translucent={false}
       />
 
       <View
@@ -67,7 +95,7 @@ export const StudentDashboardScreen: React.FC = () => {
             />
 
             <AppText style={styles.orgName} numberOfLines={1}>
-              {user.organizationName}
+              Ghana Communication Technology University
             </AppText>
           </View>
         </View>
@@ -83,7 +111,7 @@ export const StudentDashboardScreen: React.FC = () => {
               color={Colors.text.inverse}
             />
 
-            {UNREAD_COUNT > 0 && <View style={styles.notifDot} />}
+            {unreadCount > 0 && <View style={styles.notifDot} />}
           </TouchableOpacity>
 
           <Avatar name={user.fullName} uri={user.avatarUrl} size="md" />
@@ -115,7 +143,9 @@ export const StudentDashboardScreen: React.FC = () => {
               color={Colors.accent}
             />
 
-            <AppText style={styles.statNum}>{project.documents.length}</AppText>
+            <AppText style={styles.statNum}>
+              {project?.documents?.length ?? 0}
+            </AppText>
 
             <AppText style={styles.statLbl}>Documents</AppText>
           </View>
@@ -127,7 +157,7 @@ export const StudentDashboardScreen: React.FC = () => {
               color={Colors.accent}
             />
 
-            <AppText style={styles.statNum}>{UNREAD_COUNT}</AppText>
+            <AppText style={styles.statNum}>{unreadCount}</AppText>
 
             <AppText style={styles.statLbl}>Alerts</AppText>
           </View>
@@ -180,7 +210,7 @@ export const StudentDashboardScreen: React.FC = () => {
                 />
 
                 <AppText variant="caption" color="secondary">
-                  {project.department}
+                  {project.department || "Department unavailable"}
                 </AppText>
               </View>
 
@@ -192,7 +222,7 @@ export const StudentDashboardScreen: React.FC = () => {
                 />
 
                 <AppText variant="caption" color="secondary">
-                  {project.yearGroup}
+                  {project.academicYear || "Year unavailable"}
                 </AppText>
               </View>
             </View>
@@ -204,7 +234,7 @@ export const StudentDashboardScreen: React.FC = () => {
                 </AppText>
 
                 <AppText variant="caption" weight="semibold">
-                  {project.progress}%
+                  {getProjectProgress(project)}%
                 </AppText>
               </View>
 
@@ -213,7 +243,7 @@ export const StudentDashboardScreen: React.FC = () => {
                   style={[
                     styles.progressFill,
                     {
-                      width: `${project.progress}%`,
+                      width: `${getProjectProgress(project)}%`,
                     },
                   ]}
                 />
@@ -224,7 +254,10 @@ export const StudentDashboardScreen: React.FC = () => {
               <Ionicons name="person-outline" size={16} color={Colors.accent} />
 
               <AppText variant="body2">
-                Supervisor: {project.supervisor.name}
+                Supervisor:{" "}
+                {project.supervisor?.fullName ??
+                  project.supervisor?.name ??
+                  "Not assigned"}
               </AppText>
             </View>
           </Card>
@@ -238,9 +271,18 @@ export const StudentDashboardScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() =>
-                navigation.navigate("ProjectDocuments", {
-                  projectId: project.id,
-                })
+                project.documents?.[0]
+                  ? navigation.navigate("DocumentViewer", {
+                      documentId: project.documents[0].id,
+                      projectId: project.id,
+                      title:
+                        project.documents[0].name ??
+                        project.documents[0].title ??
+                        "Project document",
+                    })
+                  : navigation.navigate("ProjectDetails", {
+                      projectId: project.id,
+                    })
               }
             >
               <Ionicons
@@ -297,15 +339,16 @@ export const StudentDashboardScreen: React.FC = () => {
           </View>
 
           <SectionCard style={styles.filesCard}>
-            {project.documents.map((document, index) => (
+            {(project.documents ?? []).map((document, index) => (
               <View key={document.id}>
                 <TouchableOpacity
                   style={styles.fileRow}
                   onPress={() =>
                     navigation.navigate("DocumentViewer", {
                       documentId: document.id,
-                      courseId: project.id,
-                      title: document.title,
+                      projectId: project.id,
+                      title:
+                        document.name ?? document.title ?? "Project document",
                     })
                   }
                 >
@@ -334,7 +377,7 @@ export const StudentDashboardScreen: React.FC = () => {
                   />
                 </TouchableOpacity>
 
-                {index < project.documents.length - 1 && (
+                {index < (project.documents ?? []).length - 1 && (
                   <View style={styles.divider} />
                 )}
               </View>

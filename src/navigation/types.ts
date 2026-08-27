@@ -27,6 +27,7 @@ export type MainStackParamList = {
   ProjectDocuments: { projectId: string };
   ProjectSubmission: { projectId?: string };
   ProjectTimeline: { projectId: string };
+  SupervisionRequests: undefined;
   DepartmentProjects: {
     departmentId: string;
     departmentName: string;

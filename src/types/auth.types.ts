@@ -11,7 +11,9 @@ export interface RegisterPayload {
   password: string;
   confirmPassword: string;
   role: "student" | "lecturer";
-  organizationCode: string;
+  department: string;
+  matricNumber?: string;
+  level?: string;
 }
 
 export interface ForgotPasswordPayload {
