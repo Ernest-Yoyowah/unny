@@ -10,20 +10,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-
-import { AppText, EmptyState, Skeleton, Card } from "../../components/ui";
+import { AppText, EmptyState, Skeleton } from "../../components/ui";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useExplore } from "../../hooks/useExplore";
-import {
-  Colors,
-  Spacing,
-  BorderRadius,
-  Shadows,
-  Typography,
-} from "../../theme";
+import { Colors, Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 import { ProjectRepositoryCard } from "@/components/project/ProjectRepositoryCard";
-import { styles } from "./SearchScreen.styles";
+import { styles } from "./styles/SearchScreen.styles";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
@@ -43,50 +36,51 @@ export const SearchScreen: React.FC = () => {
 
   const hasQuery = query.trim().length > 0;
 
-  const getUserName = (user: (typeof users)[number]) => {
-    return (
-      user.fullName ?? user.profile?.fullName ?? user.email ?? "Unnamed user"
-    );
-  };
+  const getUserName = (user: (typeof users)[number]) =>
+    user.fullName ?? user.profile?.fullName ?? user.email ?? "Unnamed user";
 
-  const getUserDepartment = (user: (typeof users)[number]) => {
-    return user.department ?? user.profile?.department ?? "Academic community";
-  };
+  const getUserDepartment = (user: (typeof users)[number]) =>
+    user.department ?? user.profile?.department ?? "Academic community";
 
-  const getUserRole = (user: (typeof users)[number]) => {
-    return user.role?.toUpperCase() ?? "STUDENT";
-  };
+  const getUserRole = (user: (typeof users)[number]) =>
+    user.role?.toUpperCase() ?? "STUDENT";
 
-  const getProjectStudent = (project: (typeof projects)[number]) => {
-    return (
-      project.submittedBy?.fullName ?? project.submittedBy?.name ?? undefined
-    );
-  };
+  const getProjectStudent = (project: (typeof projects)[number]) =>
+    project.submittedBy?.fullName ?? project.submittedBy?.name ?? undefined;
 
-  const getProjectSupervisor = (project: (typeof projects)[number]) => {
-    return (
-      project.supervisor?.fullName ?? project.supervisor?.name ?? undefined
-    );
-  };
+  const getProjectSupervisor = (project: (typeof projects)[number]) =>
+    project.supervisor?.fullName ?? project.supervisor?.name ?? undefined;
 
   const renderPerson = ({ item }: { item: (typeof users)[number] }) => {
     const role = getUserRole(item);
     const isSupervisor = role === "SUPERVISOR";
 
+    const secondary =
+      item.profile?.specialization ??
+      item.profile?.level ??
+      getUserDepartment(item);
+
     return (
-      <Card style={styles.personCard}>
+      <TouchableOpacity
+        activeOpacity={0.72}
+        style={styles.personRow}
+        onPress={() => {}}
+      >
         <View
-          style={[styles.personIcon, isSupervisor && styles.supervisorIcon]}
+          style={[
+            styles.personAvatar,
+            isSupervisor && styles.personAvatarSupervisor,
+          ]}
         >
           <Ionicons
             name={isSupervisor ? "school-outline" : "person-outline"}
             size={18}
-            color={isSupervisor ? "#6366F1" : Colors.primary}
+            color={isSupervisor ? "#4F46E5" : Colors.primary}
           />
         </View>
 
-        <View style={styles.personInfo}>
-          <View style={styles.nameRow}>
+        <View style={styles.personContent}>
+          <View style={styles.personTopRow}>
             <AppText
               variant="body2"
               weight="semibold"
@@ -105,35 +99,35 @@ export const SearchScreen: React.FC = () => {
               <AppText
                 variant="caption"
                 weight="semibold"
-                style={[
-                  styles.roleText,
+                style={
                   isSupervisor
                     ? styles.supervisorRoleText
-                    : styles.studentRoleText,
-                ]}
+                    : styles.studentRoleText
+                }
               >
                 {isSupervisor ? "Supervisor" : "Student"}
               </AppText>
             </View>
           </View>
 
-          <AppText variant="caption" color="secondary" numberOfLines={1}>
-            {getUserDepartment(item)}
+          <AppText
+            variant="caption"
+            color="secondary"
+            numberOfLines={1}
+            style={styles.personSecondary}
+          >
+            {secondary}
           </AppText>
-
-          {isSupervisor && item.profile?.specialization ? (
-            <AppText variant="caption" color="secondary" numberOfLines={1}>
-              {item.profile.specialization}
-            </AppText>
-          ) : null}
-
-          {!isSupervisor && item.profile?.level ? (
-            <AppText variant="caption" color="secondary" numberOfLines={1}>
-              {item.profile.level}
-            </AppText>
-          ) : null}
         </View>
-      </Card>
+
+        <View style={styles.personChevron}>
+          <Ionicons
+            name="chevron-forward"
+            size={16}
+            color={Colors.text.tertiary}
+          />
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -159,6 +153,14 @@ export const SearchScreen: React.FC = () => {
   const showInitialLoading = isLoading && !data;
   const showError = isError && !data;
 
+  const projectLabel = hasQuery
+    ? `${projects.length} ${
+        projects.length === 1 ? "project" : "projects"
+      } found`
+    : `${projects.length} ${
+        projects.length === 1 ? "project" : "projects"
+      } available`;
+
   return (
     <View style={styles.outerContainer}>
       <StatusBar
@@ -183,14 +185,14 @@ export const SearchScreen: React.FC = () => {
           </AppText>
 
           <AppText style={styles.headerSubtitle} numberOfLines={2}>
-            Discover final year projects and members of the academic community.
+            Discover projects, students and supervisors across the university.
           </AppText>
         </View>
 
         <View style={styles.headerIcon}>
           <Ionicons
             name="compass-outline"
-            size={25}
+            size={24}
             color={Colors.text.inverse}
           />
         </View>
@@ -203,7 +205,9 @@ export const SearchScreen: React.FC = () => {
           renderItem={renderProject}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ItemSeparatorComponent={() => (
+            <View style={styles.projectSeparator} />
+          )}
           ListHeaderComponent={
             <View>
               <View style={styles.searchBar}>
@@ -217,7 +221,7 @@ export const SearchScreen: React.FC = () => {
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Search projects, departments..."
+                  placeholder="Search projects, people..."
                   placeholderTextColor={Colors.text.tertiary}
                   value={query}
                   onChangeText={setQuery}
@@ -231,6 +235,8 @@ export const SearchScreen: React.FC = () => {
                     style={styles.clearButton}
                     onPress={() => setQuery("")}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search"
                   >
                     <Ionicons
                       name="close-circle"
@@ -238,36 +244,6 @@ export const SearchScreen: React.FC = () => {
                       color={Colors.text.tertiary}
                     />
                   </TouchableOpacity>
-                )}
-              </View>
-
-              <View style={styles.resultsHeader}>
-                <View style={styles.resultsTitle}>
-                  <AppText variant="h5" weight="semibold">
-                    {hasQuery ? "Search results" : "Explore projects"}
-                  </AppText>
-
-                  <AppText variant="caption" color="secondary">
-                    {showInitialLoading
-                      ? "Searching..."
-                      : showError
-                        ? "Unable to load projects"
-                        : hasQuery
-                          ? `${projects.length} ${
-                              projects.length === 1 ? "project" : "projects"
-                            } found`
-                          : `${projects.length} ${
-                              projects.length === 1 ? "project" : "projects"
-                            } available`}
-                  </AppText>
-                </View>
-
-                {!showInitialLoading && !showError && (
-                  <View style={styles.resultsCount}>
-                    <AppText variant="caption" weight="semibold" color="accent">
-                      {projects.length}
-                    </AppText>
-                  </View>
                 )}
               </View>
 
@@ -295,33 +271,61 @@ export const SearchScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  <FlatList
-                    data={users}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderPerson}
-                    scrollEnabled={false}
-                    ItemSeparatorComponent={() => (
-                      <View style={styles.personSeparator} />
-                    )}
-                  />
+                  <View style={styles.peopleList}>
+                    <FlatList
+                      data={users}
+                      keyExtractor={(item) => item.id}
+                      renderItem={renderPerson}
+                      scrollEnabled={false}
+                      ItemSeparatorComponent={() => (
+                        <View style={styles.personSeparator} />
+                      )}
+                    />
+                  </View>
                 </View>
               )}
 
+              <View style={styles.resultsHeader}>
+                <View style={styles.resultsTitle}>
+                  <AppText variant="h5" weight="semibold">
+                    {hasQuery ? "Projects" : "Explore projects"}
+                  </AppText>
+
+                  <AppText variant="caption" color="secondary">
+                    {showInitialLoading
+                      ? "Searching..."
+                      : showError
+                        ? "Unable to load projects"
+                        : projectLabel}
+                  </AppText>
+                </View>
+
+                {!showInitialLoading && !showError && (
+                  <View style={styles.resultsCount}>
+                    <AppText variant="caption" weight="semibold" color="accent">
+                      {projects.length}
+                    </AppText>
+                  </View>
+                )}
+              </View>
+
               {showInitialLoading && (
                 <View style={styles.loadingState}>
-                  <Skeleton width="45%" height={16} />
                   <View style={styles.loadingCard}>
                     <Skeleton width={42} height={42} />
+
                     <View style={styles.loadingLines}>
-                      <Skeleton width="70%" height={13} />
-                      <Skeleton width="45%" height={11} />
+                      <Skeleton width="72%" height={13} />
+                      <Skeleton width="48%" height={11} />
                     </View>
                   </View>
+
                   <View style={styles.loadingCard}>
                     <Skeleton width={42} height={42} />
+
                     <View style={styles.loadingLines}>
-                      <Skeleton width="60%" height={13} />
-                      <Skeleton width="40%" height={11} />
+                      <Skeleton width="62%" height={13} />
+                      <Skeleton width="42%" height={11} />
                     </View>
                   </View>
                 </View>
@@ -333,12 +337,10 @@ export const SearchScreen: React.FC = () => {
               <View style={styles.emptyState}>
                 <EmptyState
                   icon="search-outline"
-                  title={
-                    users.length > 0 ? "No projects found" : "No results yet"
-                  }
+                  title={hasQuery ? "No projects found" : "No projects yet"}
                   description={
                     hasQuery
-                      ? "Try another search term."
+                      ? "Try a different project title, department or keyword."
                       : "Projects will appear here once they are available."
                   }
                 />

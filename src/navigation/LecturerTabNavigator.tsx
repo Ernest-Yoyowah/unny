@@ -6,9 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LecturerTabParamList } from "./types";
 import { ProfileScreen } from "../screens/profile/ProfileScreen";
 import { Colors, Typography, Spacing, Shadows } from "../theme";
-import { LecturerDashboardScreen } from "@/screens/dashboard/AdminDashboard";
-import { LecturerCoursesScreen } from "@/screens/moderation/PendingProjectsScreen";
-import { LecturerCoursesScreen as LecturerResourcesScreen } from "@/screens/moderation/PendingProjectsScreen";
+import { LecturerDashboardScreen } from "@/screens/dashboard/LecturerDashboard";
 
 const Tab = createBottomTabNavigator<LecturerTabParamList>();
 
@@ -81,16 +79,6 @@ export const LecturerTabNavigator: React.FC = () => {
         name="LecturerHome"
         component={LecturerDashboardScreen}
         options={{ title: "Dashboard" }}
-      />
-      <Tab.Screen
-        name="LecturerCourses"
-        component={LecturerCoursesScreen}
-        options={{ title: "Courses" }}
-      />
-      <Tab.Screen
-        name="LecturerResources"
-        component={LecturerResourcesScreen}
-        options={{ title: "Resources" }}
       />
       <Tab.Screen
         name="LecturerProfile"

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
 import {
   AppText,
   Avatar,
@@ -17,7 +18,7 @@ import { useMyProjects } from "../../hooks/useProject";
 import { useNotifications } from "../../hooks/useNotifications";
 import { Colors, Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
-import { styles } from "./StudentDashboardScreen.styles";
+import { styles } from "./styles/StudentDashboardScreen.styles";
 import { getProjectProgress } from "../../utils/project-progress";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
@@ -29,31 +30,31 @@ export const StudentDashboardScreen: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const { data: projects, isLoading: isProjectsLoading } = useMyProjects();
   const { data: notificationPage } = useNotifications();
+
   const project = projects?.[0];
+
   const unreadCount =
     notificationPage?.data.filter((item) => !item.isRead).length ?? 0;
 
-  if (!user) {
-    return <ScreenSkeleton />;
-  }
-
-  if (isProjectsLoading) {
+  if (!user || isProjectsLoading) {
     return <ScreenSkeleton />;
   }
 
   if (!project) {
     return (
       <EmptyState
-        icon="folder-open-outline"
-        title="No project yet"
-        description="Create your project to start building your workspace."
+        icon="rocket-outline"
+        title="Your project starts here"
+        description="Create your final year project workspace to manage documents, progress, reviews, and your academic journey."
         action={{
-          label: "Add Project",
+          label: "Create Project",
           onPress: () => navigation.navigate("AddProject"),
         }}
       />
     );
   }
+
+  const progress = getProjectProgress(project);
 
   const greeting = (() => {
     const hour = new Date().getHours();
@@ -63,6 +64,32 @@ export const StudentDashboardScreen: React.FC = () => {
 
     return "Good evening";
   })();
+
+  const firstName = user.fullName?.trim().split(/\s+/)[0] || "Student";
+
+  const supervisorName =
+    project.supervisor?.fullName ??
+    project.supervisor?.name ??
+    "Not assigned yet";
+
+  const documents = project.documents ?? [];
+
+  const openDocuments = () => {
+    const firstDocument = documents[0];
+
+    if (firstDocument) {
+      navigation.navigate("DocumentViewer", {
+        documentId: firstDocument.id,
+        projectId: project.id,
+        title: firstDocument.name ?? firstDocument.title ?? "Project document",
+      });
+      return;
+    }
+
+    navigation.navigate("ProjectDetails", {
+      projectId: project.id,
+    });
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -81,17 +108,17 @@ export const StudentDashboardScreen: React.FC = () => {
         ]}
       >
         <View style={styles.headerLeft}>
-          <AppText style={styles.greetingText}>{greeting},</AppText>
+          <AppText style={styles.greetingText}>{greeting}</AppText>
 
           <AppText style={styles.headerName} numberOfLines={1}>
-            {user.fullName.split(" ")[0]}
+            {firstName}
           </AppText>
 
           <View style={styles.orgRow}>
             <Ionicons
               name="school-outline"
               size={13}
-              color="rgba(255,255,255,0.55)"
+              color="rgba(255,255,255,0.58)"
             />
 
             <AppText style={styles.orgName} numberOfLines={1}>
@@ -104,14 +131,23 @@ export const StudentDashboardScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.notifBtn}
             onPress={() => navigation.navigate("Notifications")}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Open notifications"
           >
             <Ionicons
               name="notifications-outline"
-              size={22}
+              size={21}
               color={Colors.text.inverse}
             />
 
-            {unreadCount > 0 && <View style={styles.notifDot} />}
+            {unreadCount > 0 && (
+              <View style={styles.notifBadge}>
+                <AppText style={styles.notifBadgeText}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </AppText>
+              </View>
+            )}
           </TouchableOpacity>
 
           <Avatar name={user.fullName} uri={user.avatarUrl} size="md" />
@@ -122,14 +158,17 @@ export const StudentDashboardScreen: React.FC = () => {
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
       >
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Ionicons
-              name="folder-open-outline"
-              size={20}
-              color={Colors.accent}
-            />
+            <View style={[styles.statIcon, styles.statIconPrimary]}>
+              <Ionicons
+                name="folder-open-outline"
+                size={17}
+                color={Colors.primary}
+              />
+            </View>
 
             <AppText style={styles.statNum}>1</AppText>
 
@@ -137,105 +176,171 @@ export const StudentDashboardScreen: React.FC = () => {
           </View>
 
           <View style={styles.statCard}>
-            <Ionicons
-              name="document-text-outline"
-              size={20}
-              color={Colors.accent}
-            />
+            <View style={[styles.statIcon, styles.statIconAccent]}>
+              <Ionicons
+                name="document-text-outline"
+                size={17}
+                color={Colors.accent}
+              />
+            </View>
 
-            <AppText style={styles.statNum}>
-              {project?.documents?.length ?? 0}
-            </AppText>
+            <AppText style={styles.statNum}>{documents.length}</AppText>
 
             <AppText style={styles.statLbl}>Documents</AppText>
           </View>
 
           <View style={styles.statCard}>
-            <Ionicons
-              name="notifications-outline"
-              size={20}
-              color={Colors.accent}
-            />
+            <View style={[styles.statIcon, styles.statIconWarning]}>
+              <Ionicons
+                name="notifications-outline"
+                size={17}
+                color={Colors.status.warning}
+              />
+            </View>
 
             <AppText style={styles.statNum}>{unreadCount}</AppText>
 
-            <AppText style={styles.statLbl}>Alerts</AppText>
+            <AppText style={styles.statLbl}>Unread</AppText>
           </View>
         </View>
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <AppText variant="h5" weight="semibold">
-              My Final Year Project
-            </AppText>
+            <View style={styles.sectionHeading}>
+              <AppText variant="h5" weight="semibold">
+                Your project
+              </AppText>
+
+              <AppText variant="caption" color="secondary">
+                Keep your final year work moving forward.
+              </AppText>
+            </View>
 
             <TouchableOpacity
-              style={styles.addProjectButton}
-              onPress={() => navigation.navigate("AddProject")}
+              style={styles.viewAllButton}
+              onPress={() =>
+                navigation.navigate("ProjectDetails", {
+                  projectId: project.id,
+                })
+              }
+              activeOpacity={0.7}
             >
-              <Ionicons name="add" size={16} color={Colors.primary} />
-
               <AppText variant="caption" color="accent" weight="semibold">
-                Add Project
+                View
               </AppText>
+
+              <Ionicons
+                name="chevron-forward"
+                size={15}
+                color={Colors.accent}
+              />
             </TouchableOpacity>
           </View>
 
-          <Card style={styles.projectCard}>
-            <View style={styles.projectTop}>
-              <View style={styles.projectIcon}>
-                <Ionicons
-                  name="rocket-outline"
-                  size={24}
-                  color={Colors.primary}
-                />
+          <Card style={styles.projectHero}>
+            <View style={styles.projectHeroTop}>
+              <View style={styles.projectIdentity}>
+                <View style={styles.projectIcon}>
+                  <Ionicons
+                    name="rocket-outline"
+                    size={22}
+                    color={Colors.primary}
+                  />
+                </View>
+
+                <View style={styles.projectIdentityText}>
+                  <AppText variant="caption" color="tertiary" weight="semibold">
+                    FINAL YEAR PROJECT
+                  </AppText>
+
+                  <AppText
+                    variant="caption"
+                    color="secondary"
+                    numberOfLines={1}
+                    style={styles.projectDepartment}
+                  >
+                    {project.department || "Department unavailable"}
+                  </AppText>
+                </View>
               </View>
 
               <View style={styles.projectStatus}>
-                <AppText variant="caption" color="accent" weight="semibold">
-                  {project.status}
+                <View style={styles.statusDot} />
+
+                <AppText
+                  variant="caption"
+                  color="accent"
+                  weight="semibold"
+                  numberOfLines={1}
+                >
+                  {project.status || "In progress"}
                 </AppText>
               </View>
             </View>
 
-            <AppText variant="h5" weight="bold" style={styles.projectTitle}>
+            <AppText
+              variant="h5"
+              weight="bold"
+              numberOfLines={3}
+              style={styles.projectTitle}
+            >
               {project.title}
             </AppText>
 
             <View style={styles.projectMeta}>
-              <View style={styles.metaRow}>
-                <Ionicons
-                  name="school-outline"
-                  size={15}
-                  color={Colors.text.secondary}
-                />
-
-                <AppText variant="caption" color="secondary">
-                  {project.department || "Department unavailable"}
-                </AppText>
-              </View>
-
-              <View style={styles.metaRow}>
+              <View style={styles.metaItem}>
                 <Ionicons
                   name="calendar-outline"
-                  size={15}
-                  color={Colors.text.secondary}
+                  size={14}
+                  color={Colors.text.tertiary}
                 />
 
                 <AppText variant="caption" color="secondary">
                   {project.academicYear || "Year unavailable"}
                 </AppText>
               </View>
+
+              <View style={styles.metaDot} />
+
+              <View style={styles.metaItem}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={14}
+                  color={Colors.text.tertiary}
+                />
+
+                <AppText variant="caption" color="secondary">
+                  {documents.length}{" "}
+                  {documents.length === 1 ? "document" : "documents"}
+                </AppText>
+              </View>
             </View>
 
-            <View style={styles.progressBox}>
+            <View style={styles.progressArea}>
               <View style={styles.progressHeader}>
-                <AppText variant="caption" color="secondary">
-                  Completion
-                </AppText>
+                <View>
+                  <AppText variant="caption" color="secondary" weight="medium">
+                    Project completion
+                  </AppText>
 
-                <AppText variant="caption" weight="semibold">
-                  {getProjectProgress(project)}%
-                </AppText>
+                  <AppText
+                    variant="body2"
+                    weight="semibold"
+                    style={styles.progressMessage}
+                  >
+                    {progress >= 80
+                      ? "You're almost there"
+                      : progress >= 50
+                        ? "Great progress"
+                        : "Keep building momentum"}
+                  </AppText>
+                </View>
+
+                <View style={styles.progressPercentage}>
+                  <AppText style={styles.progressPercentageText} weight="bold">
+                    {progress}%
+                  </AppText>
+                </View>
               </View>
 
               <View style={styles.progressTrack}>
@@ -243,7 +348,7 @@ export const StudentDashboardScreen: React.FC = () => {
                   style={[
                     styles.progressFill,
                     {
-                      width: `${getProjectProgress(project)}%`,
+                      width: `${progress}%`,
                     },
                   ]}
                 />
@@ -251,49 +356,77 @@ export const StudentDashboardScreen: React.FC = () => {
             </View>
 
             <View style={styles.supervisorRow}>
-              <Ionicons name="person-outline" size={16} color={Colors.accent} />
+              <View style={styles.supervisorAvatar}>
+                <Ionicons
+                  name="person-outline"
+                  size={15}
+                  color={Colors.accent}
+                />
+              </View>
 
-              <AppText variant="body2">
-                Supervisor:{" "}
-                {project.supervisor?.fullName ??
-                  project.supervisor?.name ??
-                  "Not assigned"}
-              </AppText>
+              <View style={styles.supervisorContent}>
+                <AppText variant="caption" color="tertiary">
+                  Supervisor
+                </AppText>
+
+                <AppText variant="body2" weight="medium" numberOfLines={1}>
+                  {supervisorName}
+                </AppText>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={Colors.text.tertiary}
+              />
             </View>
           </Card>
         </View>
+
         <View style={styles.section}>
-          <AppText variant="h5" weight="semibold" style={styles.sectionTitle}>
-            Project Workspace
-          </AppText>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionHeading}>
+              <AppText variant="h5" weight="semibold">
+                Workspace
+              </AppText>
+
+              <AppText variant="caption" color="secondary">
+                Everything you need for your project.
+              </AppText>
+            </View>
+          </View>
 
           <View style={styles.actionGrid}>
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() =>
-                project.documents?.[0]
-                  ? navigation.navigate("DocumentViewer", {
-                      documentId: project.documents[0].id,
-                      projectId: project.id,
-                      title:
-                        project.documents[0].name ??
-                        project.documents[0].title ??
-                        "Project document",
-                    })
-                  : navigation.navigate("ProjectDetails", {
-                      projectId: project.id,
-                    })
-              }
+              onPress={openDocuments}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel="Open project documents"
             >
-              <Ionicons
-                name="document-text-outline"
-                size={22}
-                color={Colors.primary}
-              />
+              <View style={[styles.actionIcon, styles.actionIconPrimary]}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color={Colors.primary}
+                />
+              </View>
 
-              <AppText variant="caption" weight="semibold">
-                Documents
-              </AppText>
+              <View style={styles.actionText}>
+                <AppText variant="body2" weight="semibold">
+                  Documents
+                </AppText>
+
+                <AppText variant="caption" color="secondary">
+                  {documents.length} available
+                </AppText>
+              </View>
+
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color={Colors.text.tertiary}
+              />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -303,12 +436,29 @@ export const StudentDashboardScreen: React.FC = () => {
                   projectId: project.id,
                 })
               }
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel="Open project timeline"
             >
-              <Ionicons name="time-outline" size={22} color={Colors.primary} />
+              <View style={[styles.actionIcon, styles.actionIconAccent]}>
+                <Ionicons name="time-outline" size={20} color={Colors.accent} />
+              </View>
 
-              <AppText variant="caption" weight="semibold">
-                Timeline
-              </AppText>
+              <View style={styles.actionText}>
+                <AppText variant="body2" weight="semibold">
+                  Timeline
+                </AppText>
+
+                <AppText variant="caption" color="secondary">
+                  Track milestones
+                </AppText>
+              </View>
+
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color={Colors.text.tertiary}
+              />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -318,72 +468,164 @@ export const StudentDashboardScreen: React.FC = () => {
                   projectId: project.id,
                 })
               }
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel="Open project details"
             >
-              <Ionicons
-                name="information-circle-outline"
-                size={22}
-                color={Colors.primary}
-              />
+              <View style={[styles.actionIcon, styles.actionIconNeutral]}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={20}
+                  color={Colors.primary}
+                />
+              </View>
 
-              <AppText variant="caption" weight="semibold">
-                Details
-              </AppText>
+              <View style={styles.actionText}>
+                <AppText variant="body2" weight="semibold">
+                  Details
+                </AppText>
+
+                <AppText variant="caption" color="secondary">
+                  Project overview
+                </AppText>
+              </View>
+
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color={Colors.text.tertiary}
+              />
             </TouchableOpacity>
           </View>
         </View>
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <AppText variant="h5" weight="semibold">
-              Recent Project Files
-            </AppText>
+            <View style={styles.sectionHeading}>
+              <AppText variant="h5" weight="semibold">
+                Recent files
+              </AppText>
+
+              <AppText variant="caption" color="secondary">
+                Your latest project documents.
+              </AppText>
+            </View>
+
+            {documents.length > 0 && (
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={openDocuments}
+                activeOpacity={0.7}
+              >
+                <AppText variant="caption" color="accent" weight="semibold">
+                  View all
+                </AppText>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={15}
+                  color={Colors.accent}
+                />
+              </TouchableOpacity>
+            )}
           </View>
 
           <SectionCard style={styles.filesCard}>
-            {(project.documents ?? []).map((document, index) => (
-              <View key={document.id}>
-                <TouchableOpacity
-                  style={styles.fileRow}
-                  onPress={() =>
-                    navigation.navigate("DocumentViewer", {
-                      documentId: document.id,
-                      projectId: project.id,
-                      title:
-                        document.name ?? document.title ?? "Project document",
-                    })
-                  }
-                >
-                  <View style={styles.fileIcon}>
-                    <Ionicons
-                      name="document-outline"
-                      size={18}
-                      color={Colors.accent}
-                    />
-                  </View>
+            {documents.length > 0 ? (
+              documents.slice(0, 4).map((document, index) => (
+                <View key={document.id}>
+                  <TouchableOpacity
+                    style={styles.fileRow}
+                    onPress={() =>
+                      navigation.navigate("DocumentViewer", {
+                        documentId: document.id,
+                        projectId: project.id,
+                        title:
+                          document.name ?? document.title ?? "Project document",
+                      })
+                    }
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${document.title ?? "project document"}`}
+                  >
+                    <View style={styles.fileIcon}>
+                      <Ionicons
+                        name="document-text-outline"
+                        size={18}
+                        color={Colors.accent}
+                      />
+                    </View>
 
-                  <View style={styles.fileContent}>
-                    <AppText variant="body2" weight="medium" numberOfLines={1}>
-                      {document.title}
-                    </AppText>
+                    <View style={styles.fileContent}>
+                      <AppText
+                        variant="body2"
+                        weight="medium"
+                        numberOfLines={1}
+                      >
+                        {document.title || document.name || "Untitled document"}
+                      </AppText>
 
-                    <AppText variant="caption" color="secondary">
-                      {document.type}
-                    </AppText>
-                  </View>
+                      <View style={styles.fileMeta}>
+                        <AppText variant="caption" color="secondary">
+                          {document.type || "Document"}
+                        </AppText>
 
+                        <View style={styles.fileMetaDot} />
+
+                        <AppText variant="caption" color="tertiary">
+                          Open file
+                        </AppText>
+                      </View>
+                    </View>
+
+                    <View style={styles.fileChevron}>
+                      <Ionicons
+                        name="chevron-forward"
+                        size={15}
+                        color={Colors.text.tertiary}
+                      />
+                    </View>
+                  </TouchableOpacity>
+
+                  {index < Math.min(documents.length, 4) - 1 && (
+                    <View style={styles.divider} />
+                  )}
+                </View>
+              ))
+            ) : (
+              <TouchableOpacity
+                style={styles.emptyFiles}
+                onPress={openDocuments}
+                activeOpacity={0.75}
+              >
+                <View style={styles.emptyFilesIcon}>
                   <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={Colors.text.tertiary}
+                    name="document-outline"
+                    size={21}
+                    color={Colors.primary}
                   />
-                </TouchableOpacity>
+                </View>
 
-                {index < (project.documents ?? []).length - 1 && (
-                  <View style={styles.divider} />
-                )}
-              </View>
-            ))}
+                <View style={styles.emptyFilesContent}>
+                  <AppText variant="body2" weight="semibold">
+                    No project files yet
+                  </AppText>
+
+                  <AppText variant="caption" color="secondary">
+                    Your uploaded documents will appear here.
+                  </AppText>
+                </View>
+
+                <Ionicons
+                  name="arrow-forward"
+                  size={17}
+                  color={Colors.primary}
+                />
+              </TouchableOpacity>
+            )}
           </SectionCard>
         </View>
+
         <View style={styles.footerSpace} />
       </ScrollView>
     </View>

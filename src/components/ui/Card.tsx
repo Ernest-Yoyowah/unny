@@ -1,10 +1,16 @@
 import React from "react";
-import { View, ViewStyle, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  ViewStyle,
+  StyleProp,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { Colors, BorderRadius, Shadows, Spacing } from "../../theme";
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   elevation?: "none" | "xs" | "sm" | "md" | "lg";
   padding?: number | "none";
   onPress?: () => void;
@@ -50,7 +56,7 @@ export const Card: React.FC<CardProps> = ({
 
 export const SectionCard: React.FC<{
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }> = ({ children, style }) => (
   <View style={[styles.sectionCard, style]}>{children}</View>
 );

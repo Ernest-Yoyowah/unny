@@ -6,7 +6,7 @@ import {
   BorderRadius,
   Shadows,
   Typography,
-} from "../../theme";
+} from "../../../theme";
 
 export const styles = StyleSheet.create({
   outerContainer: {
@@ -20,18 +20,16 @@ export const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: Spacing[5],
-    paddingBottom: Spacing[10],
-    overflow: "visible",
+    paddingBottom: Spacing[9],
   },
 
   headerContent: {
     flex: 1,
     minWidth: 0,
-    gap: 2,
   },
 
   headerEyebrow: {
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.58)",
     fontSize: Typography.size.xs,
     fontWeight: Typography.weight.semibold,
     letterSpacing: 0.8,
@@ -49,13 +47,14 @@ export const styles = StyleSheet.create({
     fontSize: Typography.size.sm,
     lineHeight: 19,
     marginTop: 5,
-    maxWidth: 290,
+    maxWidth: 300,
   },
 
   headerIcon: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     marginLeft: Spacing[3],
+    marginTop: Spacing[1],
     borderRadius: BorderRadius.lg,
     backgroundColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
@@ -66,7 +65,7 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    marginTop: -Spacing[8],
+    marginTop: -Spacing[7],
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     overflow: "hidden",
@@ -79,7 +78,7 @@ export const styles = StyleSheet.create({
   },
 
   searchBar: {
-    minHeight: 52,
+    minHeight: 56,
     paddingHorizontal: Spacing[2],
     flexDirection: "row",
     alignItems: "center",
@@ -91,8 +90,8 @@ export const styles = StyleSheet.create({
   },
 
   searchIcon: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: BorderRadius.md,
     backgroundColor: Colors.primaryDim,
     alignItems: "center",
@@ -106,45 +105,21 @@ export const styles = StyleSheet.create({
     marginLeft: Spacing[2],
     paddingVertical: 0,
     color: Colors.text.primary,
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 20,
   },
 
   clearButton: {
-    width: 38,
-    height: 38,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-
-  resultsHeader: {
-    marginTop: Spacing[5],
-    marginBottom: Spacing[4],
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: Spacing[3],
-  },
-
-  resultsTitle: {
-    flex: 1,
-    minWidth: 0,
-    gap: 3,
-  },
-
-  resultsCount: {
-    minWidth: 34,
-    height: 30,
-    paddingHorizontal: Spacing[2],
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryDim,
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
 
   peopleSection: {
-    marginBottom: Spacing[6],
+    marginTop: Spacing[6],
+    marginBottom: Spacing[7],
   },
 
   sectionHeader: {
@@ -172,21 +147,32 @@ export const styles = StyleSheet.create({
     flexShrink: 0,
   },
 
-  personCard: {
+  peopleList: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    overflow: "hidden",
+  },
+
+  personRow: {
+    minHeight: 70,
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[2],
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing[3],
-    padding: Spacing[3],
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surface,
   },
 
   personSeparator: {
-    height: Spacing[2],
+    height: 1,
+    marginLeft: 70,
+    backgroundColor: Colors.border.light,
   },
 
-  personIcon: {
-    width: 40,
-    height: 40,
+  personAvatar: {
+    width: 42,
+    height: 42,
     borderRadius: BorderRadius.full,
     alignItems: "center",
     justifyContent: "center",
@@ -194,25 +180,30 @@ export const styles = StyleSheet.create({
     flexShrink: 0,
   },
 
-  supervisorIcon: {
+  personAvatarSupervisor: {
     backgroundColor: "#EEF2FF",
   },
 
-  personInfo: {
+  personContent: {
     flex: 1,
     minWidth: 0,
-    gap: Spacing[1],
+    marginLeft: Spacing[3],
   },
 
-  nameRow: {
+  personTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing[2],
     minWidth: 0,
+    gap: Spacing[2],
   },
 
   personName: {
-    flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
+  },
+
+  personSecondary: {
+    marginTop: 3,
   },
 
   roleBadge: {
@@ -233,20 +224,52 @@ export const styles = StyleSheet.create({
     borderColor: "#6366F1",
   },
 
-  roleText: {
+  studentRoleText: {
+    color: Colors.primary,
     fontSize: 10,
     lineHeight: 14,
   },
 
-  studentRoleText: {
-    color: Colors.primary,
-  },
-
   supervisorRoleText: {
     color: "#4F46E5",
+    fontSize: 10,
+    lineHeight: 14,
   },
 
-  separator: {
+  personChevron: {
+    width: 28,
+    height: 40,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  resultsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing[3],
+    marginBottom: Spacing[4],
+  },
+
+  resultsTitle: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+
+  resultsCount: {
+    minWidth: 34,
+    height: 30,
+    paddingHorizontal: Spacing[2],
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryDim,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  projectSeparator: {
     height: Spacing[3],
   },
 
@@ -269,13 +292,16 @@ export const styles = StyleSheet.create({
   },
 
   loadingCard: {
-    minHeight: 66,
-    padding: Spacing[3],
+    minHeight: 70,
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[2],
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing[3],
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
   },
 
   loadingLines: {

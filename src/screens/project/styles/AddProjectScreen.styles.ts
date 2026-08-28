@@ -5,7 +5,7 @@ import {
   BorderRadius,
   Typography,
   Shadows,
-} from "../../theme";
+} from "../../../theme";
 
 export const styles = StyleSheet.create({
   outerContainer: {

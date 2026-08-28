@@ -1,19 +1,24 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity, StatusBar } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { AppText, Card, EmptyState, ScreenSkeleton } from "../../components/ui";
-
-import { Colors, Spacing, BorderRadius, Shadows } from "../../theme";
-
+import {
+  Colors,
+  Spacing,
+  BorderRadius,
+  Shadows,
+  Typography,
+} from "../../theme";
 import { useProject } from "../../hooks/useProject";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { MainStackParamList } from "../../navigation/types";
 import {
   getProjectMilestones,
   getProjectProgress,
 } from "../../utils/project-progress";
+import { styles } from "./styles/ProjectTimelineScreen.styles";
 
 type Props = NativeStackScreenProps<MainStackParamList, "ProjectTimeline">;
 
@@ -22,260 +27,422 @@ export const ProjectTimelineScreen: React.FC<Props> = ({
   navigation,
 }) => {
   const insets = useSafeAreaInsets();
+
   const {
     data: project,
     isLoading,
     isError,
     refetch,
   } = useProject(route.params.projectId);
-  if (isLoading) return <ScreenSkeleton />;
-  if (isError)
+
+  if (isLoading) {
+    return <ScreenSkeleton />;
+  }
+
+  if (isError) {
     return (
       <EmptyState
         icon="cloud-offline-outline"
         title="Timeline unavailable"
-        description="We could not load this project timeline."
-        action={{ label: "Try again", onPress: () => refetch() }}
+        description="We couldn't load the progress for this project. Check your connection and try again."
+        action={{
+          label: "Try again",
+          onPress: () => refetch(),
+        }}
       />
     );
-  if (!project)
-    return <EmptyState icon="folder-open-outline" title="Project not found" />;
+  }
+
+  if (!project) {
+    return (
+      <EmptyState
+        icon="folder-open-outline"
+        title="Project not found"
+        description="This project may have been removed or is no longer available."
+      />
+    );
+  }
+
   const progress = getProjectProgress(project);
   const milestones = getProjectMilestones(project);
 
+  const completedCount = milestones.filter((item) => item.completed).length;
+  const remainingCount = Math.max(milestones.length - completedCount, 0);
+
+  const currentMilestoneIndex = milestones.findIndex((item) => !item.completed);
+
+  const currentMilestone =
+    currentMilestoneIndex >= 0
+      ? milestones[currentMilestoneIndex]
+      : milestones[milestones.length - 1];
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        {
-          paddingTop: insets.top + Spacing[4],
-        },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={22} color={Colors.text.primary} />
-        </TouchableOpacity>
-        <AppText variant="h3" weight="bold">
-          Timeline
-        </AppText>
+    <View style={styles.outerContainer}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={Colors.primary}
+        translucent={false}
+      />
 
-        <AppText variant="body2" color="secondary" style={styles.subtitle}>
-          Track your project milestones and completion stages.
-        </AppText>
-      </View>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + Spacing[3],
+          },
+        ]}
+      >
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={21} color={Colors.text.inverse} />
+          </TouchableOpacity>
 
-      <Card style={styles.progressCard}>
-        <View style={styles.progressHeader}>
-          <View>
-            <AppText variant="body2" color="secondary">
-              Overall Progress
+          <View style={styles.headerContent}>
+            <AppText style={styles.headerEyebrow}>PROJECT WORKSPACE</AppText>
+
+            <AppText style={styles.headerTitle} numberOfLines={1}>
+              Timeline
             </AppText>
 
-            <AppText variant="h4" weight="bold">
-              {progress}%
+            <AppText style={styles.headerSubtitle} numberOfLines={2}>
+              Track milestones and see how your project is progressing.
             </AppText>
           </View>
 
-          <View style={styles.progressIcon}>
+          <View style={styles.headerIcon}>
             <Ionicons
-              name="analytics-outline"
-              size={24}
-              color={Colors.primary}
+              name="time-outline"
+              size={23}
+              color={Colors.text.inverse}
             />
           </View>
         </View>
+      </View>
 
-        <View style={styles.track}>
-          <View
-            style={[
-              styles.fill,
-              {
-                width: `${progress}%`,
-              },
-            ]}
-          />
-        </View>
-      </Card>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Card style={styles.projectCard}>
+          <View style={styles.projectIdentity}>
+            <View style={styles.projectIcon}>
+              <Ionicons
+                name="rocket-outline"
+                size={21}
+                color={Colors.primary}
+              />
+            </View>
 
-      <View style={styles.section}>
-        <AppText variant="h5" weight="semibold">
-          Project Milestones
-        </AppText>
+            <View style={styles.projectIdentityContent}>
+              <AppText
+                variant="caption"
+                color="tertiary"
+                weight="semibold"
+                style={styles.projectEyebrow}
+              >
+                CURRENT PROJECT
+              </AppText>
 
-        <View style={styles.timeline}>
-          {milestones.map((item, index) => (
-            <View key={index} style={styles.timelineItem}>
-              <View style={styles.left}>
-                <View
-                  style={[
-                    styles.circle,
-                    item.completed && styles.completedCircle,
-                  ]}
-                >
-                  <Ionicons
-                    name={item.completed ? "checkmark" : "ellipse-outline"}
-                    size={14}
-                    color={
-                      item.completed ? Colors.surface : Colors.text.tertiary
-                    }
-                  />
-                </View>
+              <AppText
+                variant="body2"
+                weight="bold"
+                numberOfLines={2}
+                style={styles.projectName}
+              >
+                {project.title}
+              </AppText>
+            </View>
 
-                {index !== milestones.length - 1 && (
-                  <View
-                    style={[
-                      styles.line,
-                      item.completed && styles.completedLine,
-                    ]}
-                  />
-                )}
+            <View style={styles.statusBadge}>
+              <AppText
+                variant="caption"
+                color="accent"
+                weight="semibold"
+                numberOfLines={1}
+              >
+                {project.status}
+              </AppText>
+            </View>
+          </View>
+        </Card>
+
+        <View style={styles.progressSection}>
+          <View style={styles.sectionHeading}>
+            <View style={styles.sectionHeadingText}>
+              <AppText variant="h5" weight="semibold">
+                Overall progress
+              </AppText>
+
+              <AppText variant="caption" color="secondary">
+                {completedCount} of {milestones.length} milestones completed
+              </AppText>
+            </View>
+
+            <View style={styles.progressPercentage}>
+              <AppText
+                variant="h4"
+                weight="bold"
+                style={styles.progressPercentageText}
+              >
+                {progress}%
+              </AppText>
+            </View>
+          </View>
+
+          <Card style={styles.progressCard}>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${progress}%`,
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={styles.progressMeta}>
+              <View style={styles.progressMetaItem}>
+                <View style={styles.progressDot} />
+
+                <AppText variant="caption" color="secondary">
+                  Completed
+                </AppText>
               </View>
 
-              <Card style={styles.milestoneCard}>
-                <AppText variant="body2" weight="semibold">
-                  {item.title}
+              <AppText variant="caption" color="tertiary">
+                {remainingCount === 0
+                  ? "Project milestones complete"
+                  : `${remainingCount} ${
+                      remainingCount === 1 ? "milestone" : "milestones"
+                    } remaining`}
+              </AppText>
+            </View>
+          </Card>
+        </View>
+
+        {currentMilestone && (
+          <View style={styles.nextSection}>
+            <AppText variant="h5" weight="semibold">
+              {completedCount === milestones.length
+                ? "Project complete"
+                : "Current milestone"}
+            </AppText>
+
+            <Card style={styles.currentCard}>
+              <View style={styles.currentIcon}>
+                <Ionicons
+                  name={
+                    completedCount === milestones.length
+                      ? "checkmark-circle-outline"
+                      : "flag-outline"
+                  }
+                  size={22}
+                  color={Colors.primary}
+                />
+              </View>
+
+              <View style={styles.currentContent}>
+                <AppText variant="body2" weight="semibold" numberOfLines={2}>
+                  {currentMilestone.title}
                 </AppText>
 
                 <AppText
                   variant="caption"
                   color="secondary"
-                  style={styles.statusText}
+                  style={styles.currentDescription}
                 >
-                  {item.completed ? "Completed" : "Pending"}
+                  {completedCount === milestones.length
+                    ? "All project milestones have been completed."
+                    : "This is the next stage in your project journey."}
                 </AppText>
-              </Card>
+              </View>
+
+              <View
+                style={[
+                  styles.currentStatus,
+                  completedCount === milestones.length &&
+                    styles.currentStatusComplete,
+                ]}
+              >
+                <Ionicons
+                  name={
+                    completedCount === milestones.length
+                      ? "checkmark"
+                      : "arrow-forward"
+                  }
+                  size={15}
+                  color={Colors.primary}
+                />
+              </View>
+            </Card>
+          </View>
+        )}
+
+        <View style={styles.timelineSection}>
+          <View style={styles.sectionHeading}>
+            <View style={styles.sectionHeadingText}>
+              <AppText variant="h5" weight="semibold">
+                Project milestones
+              </AppText>
+
+              <AppText variant="caption" color="secondary">
+                Your project journey from start to completion
+              </AppText>
             </View>
-          ))}
+          </View>
+
+          <View style={styles.timeline}>
+            {milestones.map((item, index) => {
+              const isLast = index === milestones.length - 1;
+              const isCurrent =
+                !item.completed && index === currentMilestoneIndex;
+
+              return (
+                <View
+                  key={`${item.title}-${index}`}
+                  style={styles.timelineItem}
+                >
+                  <View style={styles.timelineRail}>
+                    <View
+                      style={[
+                        styles.timelineNode,
+                        item.completed && styles.timelineNodeCompleted,
+                        isCurrent && styles.timelineNodeCurrent,
+                      ]}
+                    >
+                      <Ionicons
+                        name={
+                          item.completed
+                            ? "checkmark"
+                            : isCurrent
+                              ? "ellipse"
+                              : "ellipse-outline"
+                        }
+                        size={item.completed ? 15 : isCurrent ? 10 : 13}
+                        color={
+                          item.completed
+                            ? Colors.surface
+                            : isCurrent
+                              ? Colors.primary
+                              : Colors.text.tertiary
+                        }
+                      />
+                    </View>
+
+                    {!isLast && (
+                      <View
+                        style={[
+                          styles.timelineLine,
+                          item.completed && styles.timelineLineCompleted,
+                        ]}
+                      />
+                    )}
+                  </View>
+
+                  <Card
+                    style={[
+                      styles.milestoneCard,
+                      isCurrent && styles.milestoneCardCurrent,
+                    ]}
+                  >
+                    <View style={styles.milestoneTop}>
+                      <View style={styles.milestoneTitleWrap}>
+                        <AppText
+                          variant="body2"
+                          weight="semibold"
+                          numberOfLines={2}
+                          style={styles.milestoneTitle}
+                        >
+                          {item.title}
+                        </AppText>
+
+                        {isCurrent && (
+                          <View style={styles.currentBadge}>
+                            <AppText
+                              variant="caption"
+                              weight="semibold"
+                              style={styles.currentBadgeText}
+                            >
+                              CURRENT
+                            </AppText>
+                          </View>
+                        )}
+                      </View>
+
+                      <View
+                        style={[
+                          styles.milestoneStatus,
+                          item.completed
+                            ? styles.completedStatus
+                            : isCurrent
+                              ? styles.currentMilestoneStatus
+                              : styles.pendingStatus,
+                        ]}
+                      >
+                        <Ionicons
+                          name={
+                            item.completed
+                              ? "checkmark-circle"
+                              : isCurrent
+                                ? "time-outline"
+                                : "ellipse-outline"
+                          }
+                          size={14}
+                          color={
+                            item.completed
+                              ? Colors.status.success
+                              : isCurrent
+                                ? Colors.primary
+                                : Colors.text.tertiary
+                          }
+                        />
+
+                        <AppText
+                          variant="caption"
+                          weight="semibold"
+                          style={[
+                            styles.milestoneStatusText,
+                            item.completed && styles.completedStatusText,
+                            isCurrent && styles.currentStatusText,
+                          ]}
+                        >
+                          {item.completed
+                            ? "Completed"
+                            : isCurrent
+                              ? "In progress"
+                              : "Pending"}
+                        </AppText>
+                      </View>
+                    </View>
+
+                    <AppText
+                      variant="caption"
+                      color="secondary"
+                      style={styles.milestoneHint}
+                    >
+                      {item.completed
+                        ? "Milestone completed"
+                        : isCurrent
+                          ? "Your next project stage"
+                          : "Waiting to be completed"}
+                    </AppText>
+                  </Card>
+                </View>
+              );
+            })}
+          </View>
         </View>
-      </View>
-    </ScrollView>
+
+        <View style={styles.footerSpace} />
+      </ScrollView>
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
-  content: {
-    paddingHorizontal: Spacing[5],
-    paddingBottom: Spacing[12],
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing[4],
-  },
-
-  header: {
-    marginBottom: Spacing[6],
-  },
-
-  subtitle: {
-    marginTop: Spacing[2],
-  },
-
-  progressCard: {
-    padding: Spacing[5],
-    borderRadius: BorderRadius.xl,
-    ...Shadows.sm,
-  },
-
-  progressHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  progressIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.primaryDim,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  track: {
-    marginTop: Spacing[5],
-    height: 8,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.border.light,
-    overflow: "hidden",
-  },
-
-  fill: {
-    height: "100%",
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.full,
-  },
-
-  section: {
-    marginTop: Spacing[7],
-  },
-
-  timeline: {
-    marginTop: Spacing[4],
-  },
-
-  timelineItem: {
-    flexDirection: "row",
-    minHeight: 90,
-  },
-
-  left: {
-    width: 38,
-    alignItems: "center",
-  },
-
-  circle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border.light,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  completedCircle: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-
-  line: {
-    flex: 1,
-    width: 2,
-    backgroundColor: Colors.border.light,
-    marginTop: 4,
-  },
-
-  completedLine: {
-    backgroundColor: Colors.primary,
-  },
-
-  milestoneCard: {
-    flex: 1,
-    marginLeft: Spacing[3],
-    padding: Spacing[4],
-    borderRadius: BorderRadius.lg,
-    ...Shadows.sm,
-  },
-
-  statusText: {
-    marginTop: Spacing[1],
-  },
-});

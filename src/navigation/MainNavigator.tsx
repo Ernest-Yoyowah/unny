@@ -5,7 +5,7 @@ import { useAuthStore } from "../store/auth.store";
 import { MainStackParamList } from "./types";
 
 import { StudentTabNavigator } from "./StudentTabNavigator";
-import { LecturerTabNavigator } from "./AdminTabNavigator";
+import { LecturerTabNavigator } from "./LecturerTabNavigator";
 
 import { NotificationsScreen } from "../screens/notifications/NotificationsScreen";
 import { SettingsScreen } from "../screens/settings/SettingsScreen";
@@ -43,8 +43,6 @@ export const MainNavigator: React.FC = () => {
         name="SupervisionRequests"
         component={SupervisionRequestsScreen}
       />
-      {/* <Stack.Screen name="DocumentViewer" component={DocumentViewerScreen} /> */}
-      {/* <Stack.Screen name="ProjectDocuments" component={} /> */}
 
       <Stack.Screen
         name="DocumentViewer"

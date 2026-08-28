@@ -49,31 +49,46 @@ export const ProfileScreen: React.FC = () => {
   const student =
     user.role === "student" ? (user as StudentProfile) : undefined;
 
+  const firstName = user.fullName.trim().split(/\s+/)[0] || user.fullName;
+
+  const level = student?.level ?? 400;
+  const department = student?.department ?? user.departmentId ?? "—";
+
+  const joinedDate = user.joinedAt
+    ? new Date(user.joinedAt).toLocaleDateString("en-NG", {
+        month: "long",
+        year: "numeric",
+      })
+    : "—";
+
   const accountItems = [
     {
       label: "Email",
-      value: user.email,
+      value: user.email || "—",
       icon: "mail-outline",
+      iconBackground: Colors.primaryDim,
+      iconColor: Colors.primary,
     },
     {
       label: "Student ID",
       value: student?.studentId ?? "—",
       icon: "id-card-outline",
+      iconBackground: Colors.accentLight,
+      iconColor: Colors.accent,
     },
     {
       label: "Department",
-      value: student?.department ?? user.departmentId ?? "—",
+      value: department,
       icon: "business-outline",
+      iconBackground: Colors.primaryDim,
+      iconColor: Colors.primary,
     },
     {
       label: "Joined",
-      value: user.joinedAt
-        ? new Date(user.joinedAt).toLocaleDateString("en-NG", {
-            month: "long",
-            year: "numeric",
-          })
-        : "—",
+      value: joinedDate,
       icon: "calendar-outline",
+      iconBackground: Colors.accentLight,
+      iconColor: Colors.accent,
     },
   ];
 
@@ -81,19 +96,53 @@ export const ProfileScreen: React.FC = () => {
     {
       icon: "settings-outline",
       label: "Settings",
+      description: "App preferences and notifications",
       onPress: () => navigation.navigate("Settings"),
+      iconBackground: Colors.primaryDim,
+      iconColor: Colors.primary,
     },
     {
       icon: "shield-checkmark-outline",
       label: "Privacy & Security",
+      description: "Manage your account security",
       onPress: () => {},
+      iconBackground: "#EEF2FF",
+      iconColor: "#4F46E5",
     },
     {
-      icon: "help-circle-outline",
+      icon: "people-outline",
       label: "Supervision Requests",
+      description: "View and manage supervision activity",
       onPress: () => navigation.navigate("SupervisionRequests"),
+      iconBackground: Colors.accentLight,
+      iconColor: Colors.accent,
     },
   ];
+
+  const confirmLogout = () => {
+    Alert.alert(
+      "Sign out",
+      "You'll need to sign in again to access your project workspace.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: () =>
+            logout.mutate(undefined, {
+              onError: (error) =>
+                Alert.alert(
+                  "Sign out failed",
+                  error instanceof Error ? error.message : "Please try again.",
+                ),
+            }),
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.outerContainer}>
@@ -111,39 +160,69 @@ export const ProfileScreen: React.FC = () => {
           },
         ]}
       >
-        <View style={styles.headerTop}>
-          <View style={styles.headerText}>
-            <AppText style={styles.eyebrow}>My Profile</AppText>
+        <View style={styles.headerTopBar}>
+          <View>
+            <AppText style={styles.headerEyebrow}>ACCOUNT</AppText>
 
-            <AppText style={styles.headerName} numberOfLines={1}>
+            <AppText style={styles.headerTitle}>My Profile</AppText>
+          </View>
+
+          <TouchableOpacity
+            style={styles.headerSettings}
+            activeOpacity={0.75}
+            onPress={() => navigation.navigate("Settings")}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+          >
+            <Ionicons
+              name="settings-outline"
+              size={21}
+              color={Colors.text.inverse}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.profileHero}>
+          <Avatar name={user.fullName} uri={user.avatarUrl} size="lg" />
+
+          <View style={styles.profileIdentity}>
+            <AppText style={styles.profileName} numberOfLines={2}>
               {user.fullName}
             </AppText>
 
-            <View style={styles.orgRow}>
+            <View style={styles.profileInstitution}>
               <Ionicons
                 name="school-outline"
-                size={13}
-                color="rgba(255,255,255,0.55)"
+                size={14}
+                color="rgba(255,255,255,0.58)"
               />
 
-              <AppText style={styles.orgName} numberOfLines={1}>
+              <AppText style={styles.profileInstitutionText} numberOfLines={2}>
                 Ghana Communication Technology University
               </AppText>
             </View>
           </View>
-
-          <Avatar name={user.fullName} uri={user.avatarUrl} size="lg" />
         </View>
 
         <View style={styles.headerBadges}>
-          <Badge
-            label={student ? `Level 400` : user.role}
-            variant="primary"
-            size="md"
-          />
+          {student && (
+            <View style={styles.academicBadge}>
+              <Ionicons
+                name="school-outline"
+                size={13}
+                color={Colors.text.inverse}
+              />
+
+              <AppText style={styles.academicBadgeText}>Level {level}</AppText>
+            </View>
+          )}
 
           {user.isVerified && (
-            <Badge label="Verified" variant="success" size="md" dot />
+            <View style={styles.verifiedBadge}>
+              <Ionicons name="checkmark-circle" size={14} color="#BBF7D0" />
+
+              <AppText style={styles.verifiedBadgeText}>Verified</AppText>
+            </View>
           )}
         </View>
       </View>
@@ -153,126 +232,67 @@ export const ProfileScreen: React.FC = () => {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <SectionCard style={styles.statsCard}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <View style={styles.statIcon}>
-                <Ionicons
-                  name="school-outline"
-                  size={17}
-                  color={Colors.accent}
-                />
-              </View>
-
-              <AppText
-                variant="body2"
-                weight="bold"
-                numberOfLines={1}
-                style={styles.statValue}
-              >
-                {student?.level ?? "400"}
+        <View style={styles.academicCard}>
+          <View style={styles.academicCardHeader}>
+            <View>
+              <AppText variant="caption" color="tertiary">
+                ACADEMIC PROFILE
               </AppText>
 
+              <AppText variant="h5" weight="semibold">
+                Your academic identity
+              </AppText>
+            </View>
+
+            <View style={styles.academicCardIcon}>
+              <Ionicons
+                name="school-outline"
+                size={19}
+                color={Colors.primary}
+              />
+            </View>
+          </View>
+
+          <View style={styles.academicGrid}>
+            <View style={styles.academicItem}>
               <AppText variant="caption" color="tertiary">
                 Level
               </AppText>
-            </View>
-
-            <View style={styles.statDivider} />
-
-            <View style={styles.statItem}>
-              <View style={styles.statIcon}>
-                <Ionicons
-                  name="business-outline"
-                  size={17}
-                  color={Colors.accent}
-                />
-              </View>
 
               <AppText
                 variant="body2"
                 weight="bold"
                 numberOfLines={1}
-                style={styles.statValue}
+                style={styles.academicValue}
               >
-                {student?.department ?? user.departmentId ?? "-"}
+                {level}
               </AppText>
+            </View>
 
+            <View style={styles.academicGridDivider} />
+
+            <View style={styles.academicItem}>
               <AppText variant="caption" color="tertiary">
                 Department
               </AppText>
+
+              <AppText
+                variant="body2"
+                weight="bold"
+                numberOfLines={2}
+                style={styles.academicValue}
+              >
+                {department}
+              </AppText>
             </View>
           </View>
-        </SectionCard>
-
-        <View style={styles.section}>
-          <SectionCard style={styles.infoCard}>
-            <View style={styles.sectionHeader}>
-              <View>
-                <AppText variant="h5" weight="semibold">
-                  Account Information
-                </AppText>
-
-                <AppText
-                  variant="caption"
-                  color="tertiary"
-                  style={styles.sectionSubtitle}
-                >
-                  Your account and academic details
-                </AppText>
-              </View>
-
-              <View style={styles.sectionIcon}>
-                <Ionicons
-                  name="person-circle-outline"
-                  size={19}
-                  color={Colors.primary}
-                />
-              </View>
-            </View>
-
-            <View style={styles.infoList}>
-              {accountItems.map((item, index) => (
-                <View key={item.label}>
-                  <View style={styles.infoRow}>
-                    <View style={styles.infoIcon}>
-                      <Ionicons
-                        name={item.icon as keyof typeof Ionicons.glyphMap}
-                        size={16}
-                        color={Colors.text.secondary}
-                      />
-                    </View>
-
-                    <View style={styles.infoLabel}>
-                      <AppText variant="caption" color="tertiary">
-                        {item.label}
-                      </AppText>
-                    </View>
-
-                    <AppText
-                      variant="body2"
-                      weight="medium"
-                      numberOfLines={2}
-                      style={styles.infoValue}
-                    >
-                      {item.value}
-                    </AppText>
-                  </View>
-
-                  {index < accountItems.length - 1 && (
-                    <Divider spacing={Spacing[3]} />
-                  )}
-                </View>
-              ))}
-            </View>
-          </SectionCard>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeading}>
-            <View>
+            <View style={styles.sectionHeadingText}>
               <AppText variant="h5" weight="semibold">
-                Account
+                Account information
               </AppText>
 
               <AppText
@@ -280,7 +300,73 @@ export const ProfileScreen: React.FC = () => {
                 color="tertiary"
                 style={styles.sectionSubtitle}
               >
-                Manage your account preferences
+                Details connected to your account
+              </AppText>
+            </View>
+
+            <View style={styles.sectionHeadingIcon}>
+              <Ionicons
+                name="person-outline"
+                size={18}
+                color={Colors.primary}
+              />
+            </View>
+          </View>
+
+          <SectionCard style={styles.infoCard}>
+            {accountItems.map((item, index) => (
+              <View key={item.label}>
+                <View style={styles.infoRow}>
+                  <View
+                    style={[
+                      styles.infoIcon,
+                      { backgroundColor: item.iconBackground },
+                    ]}
+                  >
+                    <Ionicons
+                      name={item.icon as keyof typeof Ionicons.glyphMap}
+                      size={16}
+                      color={item.iconColor}
+                    />
+                  </View>
+
+                  <View style={styles.infoLabel}>
+                    <AppText variant="caption" color="tertiary">
+                      {item.label}
+                    </AppText>
+                  </View>
+
+                  <AppText
+                    variant="body2"
+                    weight="medium"
+                    numberOfLines={2}
+                    style={styles.infoValue}
+                  >
+                    {item.value}
+                  </AppText>
+                </View>
+
+                {index < accountItems.length - 1 && (
+                  <Divider spacing={Spacing[3]} />
+                )}
+              </View>
+            ))}
+          </SectionCard>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeading}>
+            <View style={styles.sectionHeadingText}>
+              <AppText variant="h5" weight="semibold">
+                Account controls
+              </AppText>
+
+              <AppText
+                variant="caption"
+                color="tertiary"
+                style={styles.sectionSubtitle}
+              >
+                Manage your preferences and access
               </AppText>
             </View>
           </View>
@@ -293,27 +379,44 @@ export const ProfileScreen: React.FC = () => {
                   onPress={action.onPress}
                   activeOpacity={0.7}
                   accessibilityRole="button"
+                  accessibilityLabel={action.label}
+                  accessibilityHint={action.description}
                 >
-                  <View style={styles.actionIcon}>
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      { backgroundColor: action.iconBackground },
+                    ]}
+                  >
                     <Ionicons
                       name={action.icon as keyof typeof Ionicons.glyphMap}
                       size={18}
-                      color={Colors.primary}
+                      color={action.iconColor}
                     />
                   </View>
 
-                  <AppText
-                    variant="body2"
-                    weight="medium"
-                    style={styles.actionLabel}
-                    numberOfLines={1}
-                  >
-                    {action.label}
-                  </AppText>
+                  <View style={styles.actionContent}>
+                    <AppText
+                      variant="body2"
+                      weight="semibold"
+                      numberOfLines={1}
+                    >
+                      {action.label}
+                    </AppText>
+
+                    <AppText
+                      variant="caption"
+                      color="tertiary"
+                      numberOfLines={1}
+                      style={styles.actionDescription}
+                    >
+                      {action.description}
+                    </AppText>
+                  </View>
 
                   <Ionicons
                     name="chevron-forward"
-                    size={17}
+                    size={18}
                     color={Colors.text.tertiary}
                   />
                 </TouchableOpacity>
@@ -324,36 +427,41 @@ export const ProfileScreen: React.FC = () => {
           </SectionCard>
         </View>
 
+        <View style={styles.accountFooter}>
+          <View style={styles.memberSince}>
+            <View style={styles.memberIcon}>
+              <Ionicons
+                name="time-outline"
+                size={15}
+                color={Colors.text.secondary}
+              />
+            </View>
+
+            <View>
+              <AppText variant="caption" color="tertiary">
+                Member since
+              </AppText>
+
+              <AppText variant="caption" weight="semibold">
+                {joinedDate}
+              </AppText>
+            </View>
+          </View>
+        </View>
+
         <Button
           variant="danger"
           size="lg"
           label="Sign Out"
           fullWidth
           isLoading={logout.isPending}
-          onPress={() =>
-            Alert.alert("Sign out", "Are you sure you want to sign out?", [
-              {
-                text: "Cancel",
-                style: "cancel",
-              },
-              {
-                text: "Sign Out",
-                style: "destructive",
-                onPress: () =>
-                  logout.mutate(undefined, {
-                    onError: (error) =>
-                      Alert.alert(
-                        "Sign out failed",
-                        error instanceof Error
-                          ? error.message
-                          : "Please try again.",
-                      ),
-                  }),
-              },
-            ])
-          }
+          onPress={confirmLogout}
           style={styles.logoutButton}
         />
+
+        <AppText variant="caption" color="tertiary" style={styles.versionText}>
+          Your account information is securely managed.
+        </AppText>
 
         <View style={styles.footer} />
       </ScrollView>
@@ -373,43 +481,67 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing[9],
   },
 
-  headerTop: {
+  headerTopBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: Spacing[4],
   },
 
-  headerText: {
-    flex: 1,
-    minWidth: 0,
+  headerEyebrow: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: Typography.size.xs,
+    fontWeight: Typography.weight.semibold,
+    letterSpacing: 1,
   },
 
-  eyebrow: {
-    color: "rgba(255,255,255,0.65)",
-    fontSize: Typography.size.sm,
-    fontWeight: Typography.weight.medium,
-  },
-
-  headerName: {
+  headerTitle: {
     color: Colors.text.inverse,
     fontSize: Typography.size["2xl"],
     fontWeight: Typography.weight.bold,
     marginTop: 2,
   },
 
-  orgRow: {
+  headerSettings: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  profileHero: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    marginTop: 5,
+    marginTop: Spacing[6],
+    gap: Spacing[4],
+  },
+
+  profileIdentity: {
+    flex: 1,
     minWidth: 0,
   },
 
-  orgName: {
+  profileName: {
+    color: Colors.text.inverse,
+    fontSize: Typography.size.xl,
+    lineHeight: 27,
+    fontWeight: Typography.weight.bold,
+  },
+
+  profileInstitution: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing[1],
+    marginTop: Spacing[2],
+    paddingRight: Spacing[2],
+  },
+
+  profileInstitutionText: {
     flex: 1,
-    color: "rgba(255,255,255,0.55)",
+    color: "rgba(255,255,255,0.58)",
     fontSize: Typography.size.xs,
+    lineHeight: 17,
   },
 
   headerBadges: {
@@ -418,6 +550,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing[2],
     marginTop: Spacing[4],
+  },
+
+  academicBadge: {
+    minHeight: 30,
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.full,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[1],
+  },
+
+  academicBadgeText: {
+    color: Colors.text.inverse,
+    fontSize: Typography.size.xs,
+    fontWeight: Typography.weight.semibold,
+  },
+
+  verifiedBadge: {
+    minHeight: 30,
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.full,
+    backgroundColor: "rgba(34,197,94,0.16)",
+    borderWidth: 1,
+    borderColor: "rgba(187,247,208,0.2)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[1],
+  },
+
+  verifiedBadgeText: {
+    color: "#BBF7D0",
+    fontSize: Typography.size.xs,
+    fontWeight: Typography.weight.semibold,
   },
 
   container: {
@@ -433,45 +599,55 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing[10],
   },
 
-  statsCard: {
+  academicCard: {
     marginHorizontal: Spacing[5],
-    paddingVertical: Spacing[4],
-    elevation: 12,
-    zIndex: 20,
+    padding: Spacing[4],
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
     ...Shadows.md,
+    elevation: 10,
   },
 
-  statsRow: {
+  academicCardHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing[3],
   },
 
-  statItem: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: "center",
-    gap: Spacing[1],
-    paddingHorizontal: Spacing[2],
-  },
-
-  statIcon: {
-    width: 34,
-    height: 34,
+  academicCardIcon: {
+    width: 38,
+    height: 38,
     borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primaryDim,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.primaryDim,
-    marginBottom: Spacing[1],
+    flexShrink: 0,
   },
 
-  statValue: {
-    maxWidth: "100%",
+  academicGrid: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    marginTop: Spacing[4],
+    paddingTop: Spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
   },
 
-  statDivider: {
+  academicItem: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: Spacing[1],
+  },
+
+  academicValue: {
+    marginTop: Spacing[1],
+  },
+
+  academicGridDivider: {
     width: 1,
-    height: 48,
     backgroundColor: Colors.border.light,
+    marginHorizontal: Spacing[3],
   },
 
   section: {
@@ -480,28 +656,29 @@ const styles = StyleSheet.create({
   },
 
   sectionHeading: {
-    marginBottom: Spacing[3],
-  },
-
-  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: Spacing[3],
-    marginBottom: Spacing[4],
+    marginBottom: Spacing[3],
+  },
+
+  sectionHeadingText: {
+    flex: 1,
+    minWidth: 0,
   },
 
   sectionSubtitle: {
     marginTop: 3,
   },
 
-  sectionIcon: {
-    width: 38,
-    height: 38,
+  sectionHeadingIcon: {
+    width: 36,
+    height: 36,
     borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primaryDim,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.primaryDim,
     flexShrink: 0,
   },
 
@@ -509,29 +686,24 @@ const styles = StyleSheet.create({
     padding: Spacing[4],
   },
 
-  infoList: {
-    gap: 0,
-  },
-
   infoRow: {
-    minHeight: 42,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing[2],
   },
 
   infoIcon: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.background,
     flexShrink: 0,
   },
 
   infoLabel: {
-    width: 76,
+    width: 70,
     flexShrink: 0,
   },
 
@@ -547,7 +719,7 @@ const styles = StyleSheet.create({
   },
 
   actionRow: {
-    minHeight: 64,
+    minHeight: 72,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing[4],
@@ -556,23 +728,59 @@ const styles = StyleSheet.create({
   },
 
   actionIcon: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primaryDim,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
 
-  actionLabel: {
+  actionContent: {
     flex: 1,
     minWidth: 0,
   },
 
-  logoutButton: {
+  actionDescription: {
+    marginTop: 2,
+  },
+
+  accountFooter: {
     marginHorizontal: Spacing[5],
     marginTop: Spacing[6],
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+  },
+
+  memberSince: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+  },
+
+  memberIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logoutButton: {
+    marginHorizontal: Spacing[5],
+    marginTop: Spacing[4],
+  },
+
+  versionText: {
+    textAlign: "center",
+    marginHorizontal: Spacing[6],
+    marginTop: Spacing[3],
+    lineHeight: 17,
   },
 
   footer: {

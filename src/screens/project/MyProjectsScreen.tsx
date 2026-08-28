@@ -1,5 +1,5 @@
 import React from "react";
-import { FlatList, TouchableOpacity, View, StatusBar } from "react-native";
+import { FlatList, StatusBar, TouchableOpacity, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,22 +8,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AppText,
   Card,
+  EmptyState,
   ProgressBar,
   ScreenSkeleton,
-  EmptyState,
 } from "../../components/ui";
 import { Colors, Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 import { useMyProjects } from "../../hooks/useProject";
-import { styles } from "./MyProjectsScreen.styles";
 import { getProjectProgress } from "../../utils/project-progress";
+import { styles } from "./styles/MyProjectsScreen.styles";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
 export const MyProjectsScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-
   const { data: projects, isLoading } = useMyProjects();
 
   if (isLoading) {
@@ -32,15 +31,38 @@ export const MyProjectsScreen: React.FC = () => {
 
   if (!projects || projects.length === 0) {
     return (
-      <EmptyState
-        icon="rocket-outline"
-        title="Start your project archive"
-        description="Create a project workspace to manage your report, repository, and review status in one place."
-        action={{
-          label: "Add Project",
-          onPress: () => navigation.navigate("AddProject"),
-        }}
-      />
+      <View style={styles.emptyContainer}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+
+        <View
+          style={[
+            styles.emptyHeader,
+            {
+              paddingTop: insets.top + Spacing[4],
+            },
+          ]}
+        >
+          <AppText style={styles.headerEyebrow}>PROJECT WORKSPACE</AppText>
+
+          <AppText style={styles.headerTitle}>My Projects</AppText>
+
+          <AppText style={styles.headerSubtitle}>
+            Keep your final year project organised from one workspace.
+          </AppText>
+        </View>
+
+        <View style={styles.emptyContent}>
+          <EmptyState
+            icon="rocket-outline"
+            title="Start your project workspace"
+            description="Create your first project to manage documents, supervision, communication, and progress in one place."
+            action={{
+              label: "Create project",
+              onPress: () => navigation.navigate("AddProject"),
+            }}
+          />
+        </View>
+      </View>
     );
   }
 
@@ -50,146 +72,221 @@ export const MyProjectsScreen: React.FC = () => {
     item: (typeof projects)[number];
   }) => {
     const firstDocument = project.documents?.[0];
+    const progress = getProjectProgress(project);
+    const supervisor =
+      project.supervisor?.fullName ??
+      project.supervisor?.name ??
+      "Not assigned";
+
+    const openDetails = () => {
+      navigation.navigate("ProjectDetails", {
+        projectId: project.id,
+      });
+    };
+
+    const openDocuments = () => {
+      if (firstDocument) {
+        navigation.navigate("DocumentViewer", {
+          documentId: firstDocument.id,
+          projectId: project.id,
+          title:
+            firstDocument.name ?? firstDocument.title ?? "Project document",
+        });
+        return;
+      }
+
+      openDetails();
+    };
 
     return (
       <Card style={styles.projectCard}>
-        <View style={styles.projectHeader}>
-          <View style={styles.iconBox}>
-            <Ionicons
-              name="folder-open-outline"
-              size={21}
-              color={styles.icon.color}
-            />
-          </View>
+        <TouchableOpacity
+          activeOpacity={0.92}
+          onPress={openDetails}
+          style={styles.projectMain}
+          accessibilityRole="button"
+          accessibilityLabel={`Open project ${project.title}`}
+        >
+          <View style={styles.projectHeader}>
+            <View style={styles.projectIdentity}>
+              <View style={styles.iconBox}>
+                <Ionicons
+                  name="folder-open-outline"
+                  size={21}
+                  color={Colors.primary}
+                />
+              </View>
 
-          <View style={styles.status}>
-            <AppText
-              variant="caption"
-              color="accent"
-              weight="semibold"
-              numberOfLines={1}
-            >
-              {project.status}
-            </AppText>
-          </View>
-        </View>
+              <View style={styles.projectHeaderText}>
+                <AppText style={styles.projectEyebrow}>
+                  FINAL YEAR PROJECT
+                </AppText>
 
-        <View style={styles.titleSection}>
-          <AppText
-            variant="h5"
-            weight="bold"
-            style={styles.title}
-            numberOfLines={3}
-          >
-            {project.title}
-          </AppText>
-        </View>
+                <View style={styles.status}>
+                  <View style={styles.statusDot} />
 
-        <View style={styles.meta}>
-          <View style={styles.metaRow}>
-            <View style={styles.metaIconBox}>
-              <Ionicons
-                name="school-outline"
-                size={14}
-                color={styles.metaIcon.color}
-              />
+                  <AppText
+                    variant="caption"
+                    color="accent"
+                    weight="semibold"
+                    numberOfLines={1}
+                  >
+                    {project.status || "In progress"}
+                  </AppText>
+                </View>
+              </View>
             </View>
 
-            <AppText
-              variant="caption"
-              color="secondary"
-              numberOfLines={1}
-              style={styles.metaText}
-            >
-              {project.department || "Department unavailable"}
-            </AppText>
-          </View>
-
-          <View style={styles.metaRow}>
-            <View style={styles.metaIconBox}>
+            <View style={styles.chevronButton}>
               <Ionicons
-                name="calendar-outline"
-                size={14}
-                color={styles.metaIcon.color}
+                name="chevron-forward-outline"
+                size={18}
+                color={Colors.text.secondary}
               />
             </View>
+          </View>
 
+          <View style={styles.titleSection}>
             <AppText
-              variant="caption"
-              color="secondary"
-              numberOfLines={1}
-              style={styles.metaText}
+              variant="h5"
+              weight="bold"
+              style={styles.title}
+              numberOfLines={2}
+              ellipsizeMode="tail"
             >
-              {project.academicYear || "Year unavailable"}
-            </AppText>
-          </View>
-        </View>
-
-        <View style={styles.progressSection}>
-          <View style={styles.progressHeader}>
-            <AppText variant="caption" color="secondary">
-              Completion
-            </AppText>
-
-            <AppText variant="caption" weight="semibold">
-              {getProjectProgress(project)}%
+              {project.title}
             </AppText>
           </View>
 
-          <ProgressBar value={getProjectProgress(project)} />
-        </View>
+          <View style={styles.meta}>
+            <View style={styles.metaRow}>
+              <View style={styles.metaIconBox}>
+                <Ionicons
+                  name="school-outline"
+                  size={14}
+                  color={Colors.text.secondary}
+                />
+              </View>
 
-        <View style={styles.supervisor}>
-          <View style={styles.supervisorIconBox}>
-            <Ionicons
-              name="person-outline"
-              size={14}
-              color={styles.supervisorIcon.color}
-            />
+              <View style={styles.metaContent}>
+                <AppText variant="caption" color="tertiary" numberOfLines={1}>
+                  Department
+                </AppText>
+
+                <AppText
+                  variant="caption"
+                  color="secondary"
+                  weight="medium"
+                  numberOfLines={1}
+                  style={styles.metaText}
+                >
+                  {project.department || "Department unavailable"}
+                </AppText>
+              </View>
+            </View>
+
+            <View style={styles.metaRow}>
+              <View style={styles.metaIconBox}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={14}
+                  color={Colors.text.secondary}
+                />
+              </View>
+
+              <View style={styles.metaContent}>
+                <AppText variant="caption" color="tertiary" numberOfLines={1}>
+                  Academic year
+                </AppText>
+
+                <AppText
+                  variant="caption"
+                  color="secondary"
+                  weight="medium"
+                  numberOfLines={1}
+                  style={styles.metaText}
+                >
+                  {project.academicYear || "Year unavailable"}
+                </AppText>
+              </View>
+            </View>
           </View>
 
-          <View style={styles.supervisorContent}>
-            <AppText variant="caption" color="tertiary">
-              Supervisor
-            </AppText>
+          <View style={styles.progressSection}>
+            <View style={styles.progressHeader}>
+              <View style={styles.progressLabelRow}>
+                <Ionicons
+                  name="trending-up-outline"
+                  size={15}
+                  color={Colors.primary}
+                />
 
-            <AppText
-              variant="body2"
-              weight="medium"
-              numberOfLines={1}
-              style={styles.supervisorName}
-            >
-              {project.supervisor?.fullName ??
-                project.supervisor?.name ??
-                "Supervisor unavailable"}
-            </AppText>
+                <AppText variant="caption" color="secondary" numberOfLines={1}>
+                  Project completion
+                </AppText>
+              </View>
+
+              <AppText
+                variant="caption"
+                weight="bold"
+                style={styles.progressValue}
+              >
+                {progress}%
+              </AppText>
+            </View>
+
+            <ProgressBar value={progress} />
           </View>
-        </View>
+
+          <View style={styles.supervisor}>
+            <View style={styles.supervisorIconBox}>
+              <Ionicons name="person-outline" size={14} color={Colors.accent} />
+            </View>
+
+            <View style={styles.supervisorContent}>
+              <AppText variant="caption" color="tertiary">
+                Supervisor
+              </AppText>
+
+              <AppText
+                variant="body2"
+                weight="medium"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={styles.supervisorName}
+              >
+                {supervisor}
+              </AppText>
+            </View>
+
+            {!project.supervisor && (
+              <View style={styles.supervisorStatus}>
+                <AppText
+                  variant="caption"
+                  color="accent"
+                  weight="semibold"
+                  numberOfLines={1}
+                >
+                  Needed
+                </AppText>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.actions}>
           <TouchableOpacity
-            activeOpacity={0.75}
-            style={styles.actionCard}
-            onPress={() =>
-              firstDocument
-                ? navigation.navigate("DocumentViewer", {
-                    documentId: firstDocument.id,
-                    projectId: project.id,
-                    title:
-                      firstDocument.name ??
-                      firstDocument.title ??
-                      "Project document",
-                  })
-                : navigation.navigate("ProjectDetails", {
-                    projectId: project.id,
-                  })
-            }
+            activeOpacity={0.8}
+            style={[styles.actionButton, styles.actionButtonPrimary]}
+            onPress={openDocuments}
+            accessibilityRole="button"
+            accessibilityLabel={`Open documents for ${project.title}`}
           >
-            <View style={styles.actionIcon}>
+            <View style={[styles.actionIcon, styles.actionIconPrimary]}>
               <Ionicons
                 name="document-text-outline"
-                size={19}
-                color={styles.actionIconGlyph.color}
+                size={18}
+                color={Colors.primary}
               />
             </View>
 
@@ -197,53 +294,68 @@ export const MyProjectsScreen: React.FC = () => {
               variant="caption"
               weight="semibold"
               numberOfLines={1}
-              style={styles.actionLabel}
+              style={styles.actionTitle}
             >
               Documents
+            </AppText>
+
+            <AppText
+              variant="caption"
+              color="tertiary"
+              numberOfLines={1}
+              style={styles.actionSubtitle}
+            >
+              {project.documents?.length ?? 0}{" "}
+              {project.documents?.length === 1 ? "file" : "files"}
             </AppText>
           </TouchableOpacity>
 
           <TouchableOpacity
-            activeOpacity={0.75}
-            style={styles.actionCard}
+            activeOpacity={0.8}
+            style={styles.actionButton}
             onPress={() =>
               navigation.navigate("ProjectTimeline", {
                 projectId: project.id,
               })
             }
+            accessibilityRole="button"
+            accessibilityLabel={`Open timeline for ${project.title}`}
           >
             <View style={styles.actionIcon}>
-              <Ionicons
-                name="time-outline"
-                size={19}
-                color={styles.actionIconGlyph.color}
-              />
+              <Ionicons name="time-outline" size={18} color={Colors.primary} />
             </View>
 
             <AppText
               variant="caption"
               weight="semibold"
               numberOfLines={1}
-              style={styles.actionLabel}
+              style={styles.actionTitle}
             >
               Timeline
+            </AppText>
+
+            <AppText
+              variant="caption"
+              color="tertiary"
+              numberOfLines={1}
+              style={styles.actionSubtitle}
+            >
+              Activity
             </AppText>
           </TouchableOpacity>
 
           <TouchableOpacity
-            activeOpacity={0.75}
-            style={styles.actionCard}
-            onPress={() =>
-              navigation.navigate("ProjectDetails", {
-                projectId: project.id,
-              })
-            }
+            activeOpacity={0.8}
+            style={styles.actionButton}
+            onPress={openDetails}
+            accessibilityRole="button"
+            accessibilityLabel={`View details for ${project.title}`}
           >
             <View style={styles.actionIcon}>
               <Ionicons
                 name="information-circle-outline"
-                size={19}
-                color={styles.actionIconGlyph.color}
+                size={18}
+                color={Colors.primary}
               />
             </View>
 
@@ -251,33 +363,63 @@ export const MyProjectsScreen: React.FC = () => {
               variant="caption"
               weight="semibold"
               numberOfLines={1}
-              style={styles.actionLabel}
+              style={styles.actionTitle}
             >
               Details
+            </AppText>
+
+            <AppText
+              variant="caption"
+              color="tertiary"
+              numberOfLines={1}
+              style={styles.actionSubtitle}
+            >
+              Overview
             </AppText>
           </TouchableOpacity>
         </View>
 
         <View style={styles.abstractSection}>
           <View style={styles.abstractHeader}>
-            <AppText variant="caption" color="secondary" weight="semibold">
-              Abstract
-            </AppText>
+            <View style={styles.abstractTitleRow}>
+              <View style={styles.abstractIcon}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={14}
+                  color={Colors.text.secondary}
+                />
+              </View>
 
-            <Ionicons
-              name="document-text-outline"
-              size={14}
-              color={styles.abstractIcon.color}
-            />
+              <AppText
+                variant="caption"
+                color="secondary"
+                weight="semibold"
+                numberOfLines={1}
+              >
+                Abstract
+              </AppText>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={openDetails}
+              accessibilityRole="button"
+              accessibilityLabel={`Read project details for ${project.title}`}
+            >
+              <AppText variant="caption" color="accent" weight="semibold">
+                View
+              </AppText>
+            </TouchableOpacity>
           </View>
 
           <AppText
             variant="body2"
             color="secondary"
-            numberOfLines={4}
+            numberOfLines={3}
+            ellipsizeMode="tail"
             style={styles.abstractText}
           >
-            {project.abstract || "No abstract provided."}
+            {project.abstract || "No abstract provided yet."}
           </AppText>
         </View>
       </Card>
@@ -308,7 +450,7 @@ export const MyProjectsScreen: React.FC = () => {
           </AppText>
 
           <AppText style={styles.headerSubtitle} numberOfLines={2}>
-            Manage your final year projects and progress.
+            Everything you need to manage your final year project.
           </AppText>
         </View>
 
@@ -331,35 +473,49 @@ export const MyProjectsScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderProject}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingBottom: insets.bottom + Spacing[8],
+            },
+          ]}
           ItemSeparatorComponent={() => (
             <View style={styles.projectSeparator} />
           )}
           ListHeaderComponent={
             <View style={styles.listHeader}>
               <View style={styles.listHeaderText}>
-                <AppText variant="h5" weight="semibold">
-                  Your Projects
-                </AppText>
+                <View style={styles.listHeaderTitleRow}>
+                  <View style={styles.listHeaderIndicator} />
 
-                <AppText variant="caption" color="secondary">
-                  Keep track of your project workspace and progress.
+                  <AppText variant="h5" weight="semibold" numberOfLines={1}>
+                    Your projects
+                  </AppText>
+                </View>
+
+                <AppText variant="caption" color="secondary" numberOfLines={2}>
+                  Select a project to manage its workspace.
                 </AppText>
               </View>
 
               <TouchableOpacity
-                activeOpacity={0.75}
+                activeOpacity={0.8}
                 style={styles.addProjectButton}
                 onPress={() => navigation.navigate("AddProject")}
+                accessibilityRole="button"
+                accessibilityLabel="Create a new project"
               >
-                <Ionicons
-                  name="add"
-                  size={18}
-                  color={styles.addProjectIcon.color}
-                />
+                <View style={styles.addProjectIcon}>
+                  <Ionicons name="add" size={18} color={Colors.text.inverse} />
+                </View>
 
-                <AppText variant="caption" color="accent" weight="semibold">
-                  Add Project
+                <AppText
+                  variant="caption"
+                  color="inverse"
+                  weight="semibold"
+                  numberOfLines={1}
+                >
+                  New project
                 </AppText>
               </TouchableOpacity>
             </View>

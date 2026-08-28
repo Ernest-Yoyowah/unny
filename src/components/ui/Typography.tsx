@@ -1,5 +1,11 @@
 import React from "react";
-import { Text, TextStyle, StyleProp, StyleSheet } from "react-native";
+import {
+  Text,
+  TextStyle,
+  StyleProp,
+  StyleSheet,
+  TextProps,
+} from "react-native";
 import { Colors, Typography } from "../../theme";
 
 export type TextVariant =
@@ -16,6 +22,7 @@ export type TextVariant =
   | "overline";
 
 export type TextWeight = "regular" | "medium" | "semibold" | "bold";
+
 export type TextColor =
   | "primary"
   | "secondary"
@@ -34,6 +41,7 @@ interface AppTextProps {
   children: React.ReactNode;
   style?: StyleProp<TextStyle>;
   numberOfLines?: number;
+  ellipsizeMode?: TextProps["ellipsizeMode"];
   onPress?: () => void;
   selectable?: boolean;
 }
@@ -114,6 +122,7 @@ export const AppText: React.FC<AppTextProps> = ({
   children,
   style,
   numberOfLines,
+  ellipsizeMode,
   onPress,
   selectable = false,
 }) => {
@@ -131,6 +140,7 @@ export const AppText: React.FC<AppTextProps> = ({
         style,
       ]}
       numberOfLines={numberOfLines}
+      ellipsizeMode={ellipsizeMode}
       onPress={onPress}
       selectable={selectable}
       allowFontScaling={false}

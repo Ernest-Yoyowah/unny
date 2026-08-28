@@ -40,7 +40,7 @@ import { Colors, Spacing } from "../../theme";
 
 import { MainStackParamList } from "../../navigation/types";
 
-import { styles } from "./AddProjectScreen.styles";
+import { styles } from "./styles/AddProjectScreen.styles";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
