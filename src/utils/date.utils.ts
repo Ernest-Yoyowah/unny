@@ -87,3 +87,74 @@ export const isRecent = (
   const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
   return diffDays <= withinDays;
 };
+
+export const formatCommentDate = (date: string) => {
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  const now = new Date();
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+  const startOfDate = new Date(
+    parsedDate.getFullYear(),
+    parsedDate.getMonth(),
+    parsedDate.getDate(),
+  );
+
+  const time = parsedDate.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  if (isSameDay(parsedDate, now)) {
+    return time;
+  }
+
+  if (startOfDate.getTime() === startOfYesterday.getTime()) {
+    return `Yesterday at ${time}`;
+  }
+
+  const diffInDays =
+    (startOfToday.getTime() - startOfDate.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (diffInDays > 0 && diffInDays < 7) {
+    const weekday = parsedDate.toLocaleDateString(undefined, {
+      weekday: "long",
+    });
+
+    return `${weekday} at ${time}`;
+  }
+
+  if (parsedDate.getFullYear() === now.getFullYear()) {
+    const datePart = parsedDate.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+
+    return `${datePart} at ${time}`;
+  }
+
+  const datePart = parsedDate.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return `${datePart} at ${time}`;
+};

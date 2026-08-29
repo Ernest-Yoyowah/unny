@@ -13,4 +13,5 @@ export { Divider } from "./Divider";
 export { EmptyState } from "./EmptyState";
 export { LoadingState } from "./LoadingState";
 export { ProgressBar } from "./ProgressBar";
+export { DirectoryPerson } from "./DirectoryPerson";
 export { Skeleton, ScreenSkeleton } from "./Skeleton";

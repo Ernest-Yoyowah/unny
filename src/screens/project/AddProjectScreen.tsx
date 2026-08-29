@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import {
   View,
   ScrollView,
@@ -8,89 +7,45 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
-
 import * as DocumentPicker from "expo-document-picker";
-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 import { Ionicons } from "@expo/vector-icons";
-
 import { useNavigation } from "@react-navigation/native";
-
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-
 import { AppText, Card, Button } from "../../components/ui";
-
 import {
   useCreateProject,
   useSubmitProject,
 } from "../../hooks/useSubmitProject";
-
 import { ProjectService } from "../../api/services/project.service";
-
 import { useAuthStore } from "../../store/auth.store";
-
 import { extractApiError } from "../../api/client";
-
 import { useProjectDirectory } from "../../hooks/useProjectWorkflow";
-
 import { useCreateTag, useTags } from "../../hooks/useTags";
-
 import { Colors, Spacing } from "../../theme";
-
 import { MainStackParamList } from "../../navigation/types";
-
 import { styles } from "./styles/AddProjectScreen.styles";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
 export const AddProjectScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-
   const navigation = useNavigation<Nav>();
-
   const [title, setTitle] = useState("");
-
   const [abstract, setAbstract] = useState("");
-
   const [repositoryLink, setRepositoryLink] = useState("");
-
   const [demoLink, setDemoLink] = useState("");
-
   const [supervisorId, setSupervisorId] = useState<string>();
-
   const [technologies, setTechnologies] = useState<string[]>([]);
-
   const [newTag, setNewTag] = useState("");
-
   const [selectedFiles, setSelectedFiles] = useState<
     DocumentPicker.DocumentPickerAsset[]
   >([]);
-
   const user = useAuthStore((state) => state.user);
-
   const createProject = useCreateProject();
-
   const submitProject = useSubmitProject();
-
   const { data: tags = [] } = useTags();
-
   const createTag = useCreateTag();
-
-  /*
-   * IMPORTANT:
-   *
-   * useProjectDirectory does NOT return { data }.
-   *
-   * It returns:
-   *
-   * {
-   *   students,
-   *   supervisors,
-   *   isLoading,
-   *   isError
-   * }
-   */
 
   const directory = useProjectDirectory(user?.departmentId, {
     supervisors: user?.role === "student",
@@ -119,7 +74,6 @@ export const AddProjectScreen: React.FC = () => {
 
         if (oversized) {
           Alert.alert("File is too large", "Choose a PDF smaller than 20 MB.");
-
           return;
         }
 
@@ -132,9 +86,7 @@ export const AddProjectScreen: React.FC = () => {
 
   const submit = async () => {
     const trimmedTitle = title.trim();
-
     const trimmedAbstract = abstract.trim();
-
     const trimmedRepositoryLink = repositoryLink.trim();
 
     if (!trimmedTitle) {
@@ -169,19 +121,12 @@ export const AddProjectScreen: React.FC = () => {
     try {
       const project = await createProject.mutateAsync({
         title: trimmedTitle,
-
         abstract: trimmedAbstract,
-
         academicYear: new Date().getFullYear(),
-
         department: user.departmentId ?? "",
-
         repoUrl: trimmedRepositoryLink || undefined,
-
         demoUrl: demoLink.trim() || undefined,
-
         supervisorId,
-
         tagIds: tags
           .filter((tag) => technologies.includes(tag.name))
           .map((tag) => tag.id),
@@ -189,20 +134,15 @@ export const AddProjectScreen: React.FC = () => {
 
       if (selectedFiles.length > 0) {
         stage = "PDF upload";
-
         for (const file of selectedFiles) {
           await ProjectService.uploadReport(project.id, {
             uri: file.uri,
-
             name: file.name || `project-report-${Date.now()}.pdf`,
-
             mimeType: file.mimeType || "application/pdf",
           });
         }
       }
-
       stage = "review submission";
-
       await submitProject.mutateAsync(project.id);
 
       Alert.alert(
@@ -251,9 +191,7 @@ export const AddProjectScreen: React.FC = () => {
 
         <View style={styles.headerContent}>
           <AppText style={styles.headerEyebrow}>Final Year Project</AppText>
-
           <AppText style={styles.headerTitle}>Add your project</AppText>
-
           <AppText style={styles.headerSubtitle}>
             Submit your project to the university resource hub.
           </AppText>

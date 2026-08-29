@@ -1,17 +1,10 @@
-import { Platform } from "react-native";
-
-const BASE_FONT = Platform.select({
-  ios: "System",
-  android: "Roboto",
-  default: "System",
-});
-
 export const Typography = {
   fontFamily: {
-    regular: BASE_FONT,
-    medium: BASE_FONT,
-    semibold: BASE_FONT,
-    bold: BASE_FONT,
+    regular: "Inter_400Regular",
+    medium: "Inter_500Medium",
+    semibold: "Inter_600SemiBold",
+    bold: "Inter_700Bold",
+    extrabold: "Inter_800ExtraBold",
   },
 
   size: {
@@ -38,19 +31,19 @@ export const Typography = {
 
   lineHeight: {
     none: 1,
-    tight: 1.2,
-    snug: 1.35,
+    tight: 1.15,
+    snug: 1.3,
     normal: 1.5,
-    relaxed: 1.625,
-    loose: 2,
+    relaxed: 1.6,
+    loose: 1.8,
   },
 
   letterSpacing: {
-    tighter: -1,
-    tight: -0.5,
+    tighter: -0.8,
+    tight: -0.4,
     normal: 0,
-    wide: 0.25,
+    wide: 0.2,
     wider: 0.5,
-    widest: 1.5,
+    widest: 1.2,
   },
 } as const;

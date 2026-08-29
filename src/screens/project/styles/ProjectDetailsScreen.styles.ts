@@ -6,10 +6,58 @@ import {
   Spacing,
   Typography,
 } from "../../../theme";
+
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+
+  deletingScreen: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Spacing[6],
+  },
+
+  deletingCard: {
+    width: "100%",
+    maxWidth: 420,
+    alignItems: "center",
+    padding: Spacing[6],
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surface,
+    ...Shadows.md,
+  },
+
+  deletingIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryDim,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing[4],
+  },
+
+  deletingTitle: {
+    textAlign: "center",
+    marginBottom: Spacing[2],
+  },
+
+  deletingDescription: {
+    textAlign: "center",
+    lineHeight: 20,
+    maxWidth: 300,
+  },
+
+  errorScreen: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Spacing[5],
   },
 
   hero: {
@@ -128,6 +176,7 @@ export const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing[4],
     paddingTop: Spacing[6],
+    paddingBottom: Spacing[8],
   },
 
   editBanner: {
@@ -165,6 +214,143 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  supervisionOverviewCard: {
+    marginBottom: Spacing[5],
+    padding: Spacing[4],
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    ...Shadows.sm,
+  },
+
+  supervisionOverviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+  },
+
+  supervisionOverviewTitle: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+    minWidth: 0,
+  },
+
+  supervisionStatusCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+    padding: Spacing[4],
+    marginBottom: Spacing[5],
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.accentLight,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+  },
+
+  supervisionStatusCardAccepted: {
+    backgroundColor: Colors.status.successLight,
+    borderColor: Colors.status.success,
+  },
+
+  supervisionStatusCardRejected: {
+    backgroundColor: Colors.status.errorLight,
+    borderColor: Colors.status.errorBorder,
+  },
+
+  supervisionStatusIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.accentLight,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  supervisionStatusIconAccepted: {
+    backgroundColor: Colors.status.successLight,
+  },
+
+  supervisionStatusIconRejected: {
+    backgroundColor: Colors.status.errorLight,
+  },
+
+  supervisionStatusContent: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
+  },
+
+  viewRequestsButton: {
+    minHeight: 38,
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primaryDim,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing[1],
+    flexShrink: 0,
+  },
+
+  supervisionEmpty: {
+    marginTop: Spacing[3],
+    padding: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.background,
+  },
+
+  supervisionRequestList: {
+    marginTop: Spacing[3],
+    gap: Spacing[2],
+  },
+
+  studentSupervisionRequest: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+    padding: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+  },
+
+  studentSupervisionRequestAccepted: {
+    backgroundColor: Colors.status.successLight,
+    borderColor: Colors.status.success,
+  },
+
+  studentSupervisionRequestRejected: {
+    backgroundColor: Colors.status.errorLight,
+    borderColor: Colors.status.errorBorder,
+  },
+
+  requestStatusBadge: {
+    paddingHorizontal: Spacing[2],
+    paddingVertical: Spacing[1],
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.accentLight,
+  },
+
+  requestStatusBadgeAccepted: {
+    backgroundColor: Colors.status.successLight,
+  },
+
+  requestStatusBadgeRejected: {
+    backgroundColor: Colors.status.errorLight,
+  },
+
+  latestRequestMessage: {
+    marginTop: Spacing[3],
+    paddingTop: Spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
+  },
+
   attentionCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -189,6 +375,16 @@ export const styles = StyleSheet.create({
     flex: 1,
     gap: 3,
     minWidth: 0,
+  },
+
+  attentionAction: {
+    minHeight: 38,
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
 
   nextStepCard: {
@@ -246,6 +442,7 @@ export const styles = StyleSheet.create({
   card: {
     padding: Spacing[4],
     borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surface,
     ...Shadows.sm,
   },
 
@@ -289,6 +486,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing[3],
     color: Colors.text.primary,
     fontSize: Typography.size.sm,
+    backgroundColor: Colors.surface,
     marginBottom: Spacing[3],
   },
 
@@ -301,6 +499,8 @@ export const styles = StyleSheet.create({
     color: Colors.text.primary,
     fontSize: Typography.size.sm,
     lineHeight: 21,
+    backgroundColor: Colors.surface,
+    textAlignVertical: "top",
   },
 
   subsectionHeader: {
@@ -567,6 +767,14 @@ export const styles = StyleSheet.create({
     flexShrink: 0,
   },
 
+  requestStatusIconAccepted: {
+    backgroundColor: Colors.status.successLight,
+  },
+
+  requestStatusIconRejected: {
+    backgroundColor: Colors.status.errorLight,
+  },
+
   requestStatusContent: {
     flex: 1,
     gap: 2,
@@ -643,13 +851,18 @@ export const styles = StyleSheet.create({
 
   commentInput: {
     minHeight: 100,
+    maxHeight: 180,
     borderWidth: 1,
     borderColor: Colors.border.default,
     borderRadius: BorderRadius.lg,
-    padding: Spacing[3],
+    paddingHorizontal: Spacing[3],
+    paddingTop: Spacing[3],
+    paddingBottom: Spacing[3],
     color: Colors.text.primary,
     fontSize: Typography.size.sm,
     lineHeight: 21,
+    backgroundColor: Colors.surface,
+    textAlignVertical: "top",
   },
 
   commentButton: {
@@ -691,37 +904,131 @@ export const styles = StyleSheet.create({
 
   reviewContent: {
     flex: 1,
-    gap: 2,
+    minWidth: 0,
+    gap: 3,
+  },
+
+  reviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing[2],
+  },
+
+  reviewAuthor: {
+    flex: 1,
     minWidth: 0,
   },
 
+  reviewDate: {
+    color: Colors.text.muted,
+    fontSize: Typography.size.xs,
+    flexShrink: 0,
+  },
+
   reviewBody: {
-    marginTop: Spacing[1],
-    lineHeight: 20,
+    color: Colors.text.primary,
+    fontSize: Typography.size.sm,
+    lineHeight: 21,
+  },
+
+  reviewText: {
+    color: Colors.text.secondary,
+    fontSize: Typography.size.sm,
+    lineHeight: 21,
   },
 
   discussionEmpty: {
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing[2],
-    paddingVertical: Spacing[6],
+    gap: Spacing[3],
+    paddingVertical: Spacing[7],
+    paddingHorizontal: Spacing[4],
   },
+
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing[8],
+    paddingHorizontal: Spacing[5],
+  },
+
+  emptyStateIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryDim,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing[3],
+  },
+
+  emptyStateContent: {
+    alignItems: "center",
+    gap: Spacing[2],
+  },
+
+  errorState: {
+    padding: Spacing[4],
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.status.errorLight,
+    borderWidth: 1,
+    borderColor: Colors.status.errorBorder,
+    marginBottom: Spacing[5],
+  },
+
+  errorStateHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+    marginBottom: Spacing[2],
+  },
+
+  errorStateIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  errorStateContent: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+
+  retryButton: {
+    alignSelf: "flex-start",
+    minHeight: 40,
+    paddingHorizontal: Spacing[4],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing[2],
+    marginTop: Spacing[3],
+  },
+
+  /*
+   * Project documents
+   */
 
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing[3],
     paddingVertical: Spacing[3],
-  },
-
-  documentRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.border.light,
   },
 
   documentIcon: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: BorderRadius.lg,
     backgroundColor: Colors.primaryDim,
     alignItems: "center",
@@ -732,51 +1039,14 @@ export const styles = StyleSheet.create({
   documentContent: {
     flex: 1,
     minWidth: 0,
+    gap: 2,
   },
 
-  errorScreen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: Spacing[5],
-  },
-
-  deletingScreen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing[6],
-  },
-
-  deletingCard: {
-    width: "100%",
-    maxWidth: 420,
-    padding: Spacing[7],
-    borderRadius: BorderRadius.xl,
-    backgroundColor: Colors.surface,
-    alignItems: "center",
-    ...Shadows.sm,
-  },
-
-  deletingIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryDim,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  deletingTitle: {
-    marginTop: Spacing[5],
-    textAlign: "center",
-  },
-
-  deletingDescription: {
-    marginTop: Spacing[3],
-    textAlign: "center",
-    lineHeight: 22,
+  commentMeta: {
+    // flexDirection: "row",
+    // alignItems: "center",
+    // justifyContent: "space-between",
+    // gap: 8,
+    // marginBottom: 4,
   },
 });

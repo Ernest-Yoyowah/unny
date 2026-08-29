@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StatusBar,
   TextInput,
@@ -11,21 +10,28 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AppText, Card, EmptyState, ScreenSkeleton } from "../../components/ui";
+import {
+  AppText,
+  Card,
+  DirectoryPerson,
+  EmptyState,
+  ScreenSkeleton,
+} from "../../components/ui";
 import { Colors } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
-import { useProject } from "../../hooks/useProject";
-import {
-  useProjectActions,
-  useProjectCollaboratorActions,
-  useProjectCollaborators,
-  useProjectDirectory,
-  useProjectReviews,
-  useRespondToSupervision,
-  useSupervisionRequests,
-} from "../../hooks/useProjectWorkflow";
-import { useAuthStore } from "../../store/auth.store";
 import { styles } from "./styles/ProjectDetailsScreen.styles";
+import { formatCommentDate } from "@/utils/date.utils";
+import { useProjectDetails } from "./hooks/useProjectDetails";
+import { SupervisionOverview } from "./components/project-details/SupervisionOverview";
+import { CollaboratorList } from "./components/project-details/CollaboratorList";
+import { CollaboratorInviteSection } from "./components/project-details/CollaboratorInviteSection";
+import { DocumentRow } from "@/components/document/DocumentRow";
+import {
+  InfoRow,
+  InlineMessage,
+  LoadingRow,
+  SectionHeader,
+} from "./components/project-details/ProjectDetailsUI";
 
 type Props = NativeStackScreenProps<MainStackParamList, "ProjectDetails">;
 
@@ -35,299 +41,45 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
 }) => {
   const { projectId } = route.params;
   const insets = useSafeAreaInsets();
-
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState("");
-  const [abstract, setAbstract] = useState("");
-  const [comment, setComment] = useState("");
-
   const {
-    data: project,
+    project,
     isLoading,
     isError,
     refetch,
-  } = useProject(projectId, !isDeleting);
-
-  const currentUser = useAuthStore((state) => state.user);
-
-  const actions = useProjectActions(projectId);
-
-  const { data: reviews = [] } = useProjectReviews(projectId, !isDeleting);
-
-  const { data: collaborators = [] } = useProjectCollaborators(
-    projectId,
-    !isDeleting,
-  );
-
-  const { data: supervisionRequests = [] } = useSupervisionRequests();
-
-  const respondToSupervision = useRespondToSupervision();
-
-  const directory = useProjectDirectory(project?.department, {
-    students: currentUser?.role === "student",
-    supervisors: currentUser?.role === "student",
-  });
-
-  const collaboratorActions = useProjectCollaboratorActions(projectId);
-
-  const isStudent = currentUser?.role === "student";
-  const isSupervisor =
-    currentUser?.role === "lecturer" || currentUser?.role === "admin";
-
-  const canEdit = isStudent && project?.submittedBy?.id === currentUser?.id;
-  const canDelete = isStudent && project?.submittedBy?.id === currentUser?.id;
-
-  const projectRequests = useMemo(
-    () =>
-      supervisionRequests.filter((request) => request.projectId === projectId),
-    [projectId, supervisionRequests],
-  );
-
-  const myPendingRequest = useMemo(
-    () =>
-      projectRequests.find(
-        (request) =>
-          request.requester?.id === currentUser?.id &&
-          request.status === "PENDING",
-      ),
-    [currentUser?.id, projectRequests],
-  );
-
-  const availableStudents = useMemo(() => {
-    const collaboratorIds = new Set(
-      collaborators.map((collaborator) => collaborator.userId),
-    );
-
-    return directory.students.filter((student) => {
-      if (student.id === currentUser?.id) {
-        return false;
-      }
-
-      return !collaboratorIds.has(student.id);
-    });
-  }, [collaborators, currentUser?.id, directory.students]);
-
-  const availableSupervisors = useMemo(() => {
-    const requestedSupervisorIds = new Set(
-      projectRequests
-        .filter((request) => request.status === "PENDING")
-        .map((request) => request.supervisorId),
-    );
-
-    return directory.supervisors.filter((supervisor) => {
-      if (supervisor.id === currentUser?.id) {
-        return false;
-      }
-
-      return !requestedSupervisorIds.has(supervisor.id);
-    });
-  }, [currentUser?.id, directory.supervisors, projectRequests]);
-
-  const beginEditing = () => {
-    if (!project || isDeleting || !canEdit) {
-      return;
-    }
-
-    setTitle(project.title);
-    setAbstract(project.abstract ?? "");
-    setIsEditing(true);
-  };
-
-  const cancelEditing = () => {
-    setIsEditing(false);
-    setTitle("");
-    setAbstract("");
-  };
-
-  const saveChanges = async () => {
-    if (isDeleting || !canEdit) {
-      return;
-    }
-
-    if (!title.trim()) {
-      Alert.alert("Title required", "Please enter a project title.");
-      return;
-    }
-
-    try {
-      await actions.update.mutateAsync({
-        title: title.trim(),
-        abstract: abstract.trim(),
-      });
-
-      setIsEditing(false);
-
-      Alert.alert("Project updated", "Your project details have been saved.");
-    } catch (error) {
-      Alert.alert(
-        "Update failed",
-        error instanceof Error ? error.message : "Please try again.",
-      );
-    }
-  };
-
-  const addComment = async () => {
-    if (!comment.trim() || isDeleting) {
-      return;
-    }
-
-    try {
-      await actions.comment.mutateAsync(comment.trim());
-      setComment("");
-    } catch (error) {
-      Alert.alert(
-        "Comment failed",
-        error instanceof Error ? error.message : "Please try again.",
-      );
-    }
-  };
-
-  const confirmDelete = () => {
-    if (isDeleting || actions.remove.isPending || !canDelete) {
-      return;
-    }
-
-    Alert.alert(
-      "Delete project",
-      "This project and its associated data will be permanently deleted. This cannot be undone.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete project",
-          style: "destructive",
-          onPress: handleDelete,
-        },
-      ],
-    );
-  };
-
-  const handleDelete = async () => {
-    if (isDeleting || actions.remove.isPending || !canDelete) {
-      return;
-    }
-
-    setIsDeleting(true);
-
-    try {
-      await actions.remove.mutateAsync();
-
-      Alert.alert("Project deleted", "The project was successfully deleted.", [
-        {
-          text: "OK",
-          onPress: () => navigation.pop(),
-        },
-      ]);
-    } catch (error) {
-      setIsDeleting(false);
-
-      Alert.alert(
-        "Delete failed",
-        error instanceof Error
-          ? error.message
-          : "We could not delete the project. Please try again.",
-      );
-    }
-  };
-
-  const handleInvite = async (userId: string) => {
-    if (collaboratorActions.invite.isPending) {
-      return;
-    }
-
-    try {
-      await collaboratorActions.invite.mutateAsync(userId);
-
-      Alert.alert(
-        "Invitation sent",
-        "The student has been invited to contribute to this project.",
-      );
-    } catch (error) {
-      Alert.alert(
-        "Invitation failed",
-        error instanceof Error
-          ? error.message
-          : "We could not send the collaboration invitation.",
-      );
-    }
-  };
-
-  const handleRemoveCollaborator = (userId: string) => {
-    if (collaboratorActions.remove.isPending) {
-      return;
-    }
-
-    Alert.alert(
-      "Remove collaborator",
-      "Are you sure you want to remove this collaborator?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => collaboratorActions.remove.mutate(userId),
-        },
-      ],
-    );
-  };
-
-  const handleAcceptInvite = (id: string) => {
-    if (collaboratorActions.respond.isPending) {
-      return;
-    }
-
-    collaboratorActions.respond.mutate({
-      id,
-      status: "ACCEPTED",
-    });
-  };
-
-  const handleRequestSupervision = async (supervisorId: string) => {
-    if (collaboratorActions.supervise.isPending) {
-      return;
-    }
-
-    try {
-      await collaboratorActions.supervise.mutateAsync({
-        supervisorId,
-        message: `Would you be willing to supervise ${
-          project?.title ?? "this project"
-        }?`,
-      });
-
-      Alert.alert(
-        "Request sent",
-        "Your supervision request has been sent to the supervisor.",
-      );
-    } catch (error) {
-      Alert.alert(
-        "Request failed",
-        error instanceof Error
-          ? error.message
-          : "We could not send the supervision request.",
-      );
-    }
-  };
-
-  const handleSupervisionResponse = (
-    id: string,
-    status: "ACCEPTED" | "REJECTED",
-  ) => {
-    if (respondToSupervision.isPending) {
-      return;
-    }
-
-    respondToSupervision.mutate({
-      id,
-      status,
-    });
-  };
+    currentUser,
+    actions,
+    reviews,
+    collaborators,
+    respondToSupervision,
+    directory,
+    collaboratorActions,
+    isStudent,
+    isSupervisor,
+    canEdit,
+    projectRequests,
+    myRequests,
+    myPendingRequest,
+    myLatestRequest,
+    availableStudents,
+    availableSupervisors,
+    isDeleting,
+    isEditing,
+    abstract,
+    setAbstract,
+    comment,
+    setComment,
+    beginEditing,
+    cancelEditing,
+    saveChanges,
+    addComment,
+    confirmDelete,
+    handleInvite,
+    handleRemoveCollaborator,
+    handleAcceptInvite,
+    handleRequestSupervision,
+    handleSupervisionResponse,
+    openSupervisionRequests,
+  } = useProjectDetails(projectId, navigation);
 
   if (isDeleting) {
     return (
@@ -496,6 +248,14 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
           </View>
         )}
 
+        {isStudent && (
+          <SupervisionOverview
+            myRequests={myRequests}
+            myLatestRequest={myLatestRequest}
+            onViewRequests={openSupervisionRequests}
+          />
+        )}
+
         {isSupervisor && (
           <Card style={styles.attentionCard}>
             <View style={styles.attentionIcon}>
@@ -519,10 +279,21 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
                   : "This project does not currently have a supervisor assigned."}
               </AppText>
             </View>
+
+            <TouchableOpacity
+              style={styles.attentionAction}
+              onPress={openSupervisionRequests}
+              accessibilityRole="button"
+              accessibilityLabel="View supervision requests"
+            >
+              <AppText variant="caption" color="inverse" weight="semibold">
+                Requests
+              </AppText>
+            </TouchableOpacity>
           </Card>
         )}
 
-        {isStudent && !project.supervisor && (
+        {isStudent && !project.supervisor && !myLatestRequest && (
           <Card style={styles.nextStepCard}>
             <View style={styles.nextStepIcon}>
               <Ionicons name="school-outline" size={22} color={Colors.accent} />
@@ -643,135 +414,27 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
             </View>
           </View>
 
-          {collaborators.length === 0 ? (
-            <View style={styles.inlineEmpty}>
-              <AppText variant="caption" color="secondary">
-                No collaborators yet.
-              </AppText>
-            </View>
-          ) : (
-            collaborators.map((collaborator) => (
-              <View key={collaborator.id} style={styles.personRow}>
-                <View style={styles.avatar}>
-                  <Ionicons
-                    name="person-outline"
-                    size={17}
-                    color={Colors.primary}
-                  />
-                </View>
-
-                <View style={styles.personDetails}>
-                  <AppText variant="body2" weight="medium">
-                    {collaborator.user?.fullName ??
-                      collaborator.user?.name ??
-                      collaborator.user?.email ??
-                      collaborator.userId}
-                  </AppText>
-
-                  <AppText variant="caption" color="secondary">
-                    {collaborator.status === "PENDING"
-                      ? "Invitation pending"
-                      : "Collaborator"}
-                  </AppText>
-                </View>
-
-                {collaborator.status === "PENDING" &&
-                collaborator.userId === currentUser?.id ? (
-                  <TouchableOpacity
-                    disabled={collaboratorActions.respond.isPending}
-                    style={styles.smallPrimaryButton}
-                    onPress={() => handleAcceptInvite(collaborator.id)}
-                  >
-                    <AppText
-                      variant="caption"
-                      color="inverse"
-                      weight="semibold"
-                    >
-                      Accept
-                    </AppText>
-                  </TouchableOpacity>
-                ) : collaborator.userId !== currentUser?.id && isStudent ? (
-                  <TouchableOpacity
-                    disabled={collaboratorActions.remove.isPending}
-                    onPress={() =>
-                      handleRemoveCollaborator(collaborator.userId)
-                    }
-                  >
-                    <Ionicons
-                      name="remove-circle-outline"
-                      size={21}
-                      color={Colors.status.error}
-                    />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            ))
-          )}
+          <CollaboratorList
+            collaborators={collaborators}
+            currentUserId={currentUser?.id}
+            isStudent={isStudent}
+            isResponding={collaboratorActions.respond.isPending}
+            isRemoving={collaboratorActions.remove.isPending}
+            onAcceptInvite={handleAcceptInvite}
+            onRemoveCollaborator={handleRemoveCollaborator}
+          />
 
           {isStudent && (
-            <View style={styles.workflowBlock}>
-              <View style={styles.workflowHeader}>
-                <View style={styles.workflowHeaderIcon}>
-                  <Ionicons
-                    name="person-add-outline"
-                    size={18}
-                    color={Colors.primary}
-                  />
-                </View>
-
-                <View style={styles.workflowHeaderContent}>
-                  <AppText variant="body2" weight="semibold">
-                    Add a collaborator
-                  </AppText>
-
-                  <AppText variant="caption" color="secondary">
-                    Invite another student to contribute to this project.
-                  </AppText>
-                </View>
-              </View>
-
-              {directory.isLoading ? (
-                <LoadingRow label="Finding students..." />
-              ) : directory.isError && availableStudents.length === 0 ? (
-                <InlineMessage text="We could not load students right now." />
-              ) : availableStudents.length === 0 ? (
-                <InlineMessage text="No other students are currently available to invite." />
-              ) : (
-                availableStudents.map((student) => {
-                  const studentName =
-                    student.fullName ??
-                    student.profile?.fullName ??
-                    student.name ??
-                    student.email ??
-                    "Student";
-
-                  const studentDepartment =
-                    student.department ?? student.profile?.department;
-
-                  const studentLevel = student.level ?? student.profile?.level;
-
-                  const isInviting =
-                    collaboratorActions.invite.isPending &&
-                    collaboratorActions.invite.variables === student.id;
-
-                  return (
-                    <DirectoryPerson
-                      key={student.id}
-                      icon="person-outline"
-                      name={studentName}
-                      details={
-                        [studentDepartment, studentLevel].filter(
-                          Boolean,
-                        ) as string[]
-                      }
-                      actionLabel={isInviting ? "Sending..." : "Invite"}
-                      loading={isInviting}
-                      onPress={() => handleInvite(student.id)}
-                    />
-                  );
-                })
-              )}
-            </View>
+            <CollaboratorInviteSection
+              students={availableStudents}
+              isLoading={directory.isLoading}
+              isError={directory.isError}
+              isInviting={(studentId) =>
+                collaboratorActions.invite.isPending &&
+                collaboratorActions.invite.variables === studentId
+              }
+              onInvite={handleInvite}
+            />
           )}
 
           <View style={styles.divider} />
@@ -824,32 +487,6 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
             </View>
           ) : isStudent ? (
             <View style={styles.workflowBlock}>
-              {myPendingRequest && (
-                <View style={styles.pendingRequest}>
-                  <View style={styles.pendingIcon}>
-                    <Ionicons
-                      name="time-outline"
-                      size={18}
-                      color={Colors.accent}
-                    />
-                  </View>
-
-                  <View style={styles.pendingContent}>
-                    <AppText variant="body2" weight="semibold">
-                      Supervisor request pending
-                    </AppText>
-
-                    <AppText variant="caption" color="secondary">
-                      Waiting for{" "}
-                      {myPendingRequest.supervisor?.fullName ??
-                        myPendingRequest.supervisor?.name ??
-                        "the supervisor"}{" "}
-                      to respond.
-                    </AppText>
-                  </View>
-                </View>
-              )}
-
               {!myPendingRequest && (
                 <>
                   <View style={styles.workflowHeader}>
@@ -913,6 +550,7 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
                           }
                           actionLabel={isRequesting ? "Sending..." : "Request"}
                           loading={isRequesting}
+                          accent
                           onPress={() =>
                             handleRequestSupervision(supervisor.id)
                           }
@@ -930,7 +568,15 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
           {isSupervisor &&
             projectRequests.map((request) => (
               <View key={request.id} style={styles.supervisionRequest}>
-                <View style={styles.requestStatusIcon}>
+                <View
+                  style={[
+                    styles.requestStatusIcon,
+                    request.status === "ACCEPTED" &&
+                      styles.requestStatusIconAccepted,
+                    request.status === "REJECTED" &&
+                      styles.requestStatusIconRejected,
+                  ]}
+                >
                   <Ionicons
                     name={
                       request.status === "ACCEPTED"
@@ -956,8 +602,11 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
                   </AppText>
 
                   <AppText variant="caption" color="secondary">
+                    {request.requester?.fullName
+                      ? `${request.requester.fullName} · `
+                      : ""}
                     {request.status === "PENDING"
-                      ? "This student is waiting for your response."
+                      ? "Waiting for your response."
                       : `Request ${request.status.toLowerCase()}.`}
                   </AppText>
                 </View>
@@ -1143,9 +792,17 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
               </View>
 
               <View style={styles.reviewContent}>
-                <AppText variant="caption" weight="semibold">
-                  {item.author?.fullName ?? "Project participant"}
-                </AppText>
+                <View style={styles.commentMeta}>
+                  <AppText variant="caption" weight="semibold">
+                    {item.author?.fullName ?? "Project participant"}
+                  </AppText>
+
+                  {item.createdAt && (
+                    <AppText variant="caption" color="secondary">
+                      {formatCommentDate(item.createdAt)}
+                    </AppText>
+                  )}
+                </View>
 
                 <AppText variant="body2" style={styles.reviewBody}>
                   {item.body}
@@ -1211,179 +868,3 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
     </View>
   );
 };
-
-const SectionHeader = ({
-  icon,
-  title,
-  description,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  description: string;
-}) => (
-  <View style={styles.sectionHeader}>
-    <View style={styles.sectionHeaderIcon}>
-      <Ionicons name={icon} size={17} color={Colors.primary} />
-    </View>
-
-    <View style={styles.sectionHeaderText}>
-      <AppText variant="h5" weight="semibold">
-        {title}
-      </AppText>
-
-      <AppText variant="caption" color="secondary">
-        {description}
-      </AppText>
-    </View>
-  </View>
-);
-
-const InfoRow = ({
-  icon,
-  label,
-  value,
-  last = false,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value?: string;
-  last?: boolean;
-}) => (
-  <View style={[styles.infoRow, !last && styles.infoRowBorder]}>
-    <View style={styles.infoIcon}>
-      <Ionicons name={icon} size={17} color={Colors.accent} />
-    </View>
-
-    <View style={styles.infoContent}>
-      <AppText variant="caption" color="secondary">
-        {label}
-      </AppText>
-
-      <AppText variant="body2" weight="medium">
-        {value || "Not provided"}
-      </AppText>
-    </View>
-  </View>
-);
-
-const LoadingRow = ({ label }: { label: string }) => (
-  <View style={styles.loadingRow}>
-    <ActivityIndicator size="small" color={Colors.primary} />
-
-    <AppText variant="caption" color="secondary">
-      {label}
-    </AppText>
-  </View>
-);
-
-const InlineMessage = ({ text }: { text: string }) => (
-  <View style={styles.inlineMessage}>
-    <AppText variant="caption" color="secondary">
-      {text}
-    </AppText>
-  </View>
-);
-
-const DirectoryPerson = ({
-  icon,
-  name,
-  details,
-  actionLabel,
-  loading,
-  accent = false,
-  onPress,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  name: string;
-  details: string[];
-  actionLabel: string;
-  loading: boolean;
-  accent?: boolean;
-  onPress: () => void;
-}) => (
-  <View style={styles.directoryCard}>
-    <View style={styles.directoryPerson}>
-      <View
-        style={[styles.directoryAvatar, accent && styles.directoryAvatarAccent]}
-      >
-        <Ionicons
-          name={icon}
-          size={17}
-          color={accent ? Colors.accent : Colors.primary}
-        />
-      </View>
-
-      <View style={styles.personDetails}>
-        <AppText variant="body2" weight="medium">
-          {name}
-        </AppText>
-
-        {details.map((detail, index) => (
-          <AppText
-            key={`${detail}-${index}`}
-            variant="caption"
-            color="secondary"
-          >
-            {detail}
-          </AppText>
-        ))}
-      </View>
-    </View>
-
-    <TouchableOpacity
-      disabled={loading}
-      style={[
-        styles.directoryActionButton,
-        accent && styles.directoryActionButtonAccent,
-        loading && styles.directoryActionButtonDisabled,
-      ]}
-      onPress={onPress}
-    >
-      {loading ? (
-        <ActivityIndicator size="small" color={Colors.text.inverse} />
-      ) : (
-        <Ionicons
-          name={accent ? "send-outline" : "person-add-outline"}
-          size={15}
-          color={Colors.text.inverse}
-        />
-      )}
-
-      <AppText variant="caption" color="inverse" weight="semibold">
-        {actionLabel}
-      </AppText>
-    </TouchableOpacity>
-  </View>
-);
-
-const DocumentRow = ({
-  title,
-  type,
-  onPress,
-}: {
-  title: string;
-  type: string;
-  onPress: () => void;
-}) => (
-  <TouchableOpacity style={styles.documentRow} onPress={onPress}>
-    <View style={styles.documentIcon}>
-      <Ionicons name="document-text-outline" size={20} color={Colors.primary} />
-    </View>
-
-    <View style={styles.documentContent}>
-      <AppText variant="body2" weight="medium" numberOfLines={2}>
-        {title}
-      </AppText>
-
-      <AppText variant="caption" color="secondary">
-        {type}
-      </AppText>
-    </View>
-
-    <Ionicons
-      name="chevron-forward-outline"
-      size={19}
-      color={Colors.text.tertiary}
-    />
-  </TouchableOpacity>
-);

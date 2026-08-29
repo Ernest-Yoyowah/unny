@@ -59,6 +59,8 @@ export interface SupervisionRequest {
   supervisorId: string;
   status: string;
   message?: string;
+  createdAt?: string;
+  updatedAt?: string;
   supervisor?: ProjectUser;
   requester?: ProjectUser;
   project?: {

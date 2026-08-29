@@ -6,6 +6,15 @@ import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+} from "@expo-google-fonts/inter";
+
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { useAuthStore } from "./src/store/auth.store";
 
@@ -27,15 +36,27 @@ const queryClient = new QueryClient({
 export default function App() {
   const { initializeAuth, isInitializing } = useAuthStore();
 
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+
   useEffect(() => {
     initializeAuth();
   }, []);
 
   useEffect(() => {
-    if (!isInitializing) {
+    if (fontsLoaded && !isInitializing) {
       SplashScreen.hideAsync();
     }
-  }, [isInitializing]);
+  }, [fontsLoaded, isInitializing]);
+
+  if (!fontsLoaded || isInitializing) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={styles.root}>
