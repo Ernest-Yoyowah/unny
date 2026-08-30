@@ -7,6 +7,7 @@ import { LecturerTabParamList } from "./types";
 import { ProfileScreen } from "../screens/profile/ProfileScreen";
 import { Colors, Typography, Spacing, Shadows } from "../theme";
 import { LecturerDashboardScreen } from "@/screens/dashboard/LecturerDashboard";
+import { SearchScreen } from "@/screens/explorer/SearchScreen";
 
 const Tab = createBottomTabNavigator<LecturerTabParamList>();
 
@@ -25,16 +26,16 @@ const TAB_CONFIG: {
     activeIcon: "grid",
   },
   {
-    name: "LecturerCourses",
-    label: "Courses",
-    icon: "book-outline",
-    activeIcon: "book",
-  },
-  {
-    name: "LecturerResources",
-    label: "Resources",
+    name: "LecturerProjects",
+    label: "Projects",
     icon: "folder-outline",
     activeIcon: "folder",
+  },
+  {
+    name: "Search",
+    label: "Explore",
+    icon: "search-outline",
+    activeIcon: "search",
   },
   {
     name: "LecturerProfile",
@@ -80,6 +81,13 @@ export const LecturerTabNavigator: React.FC = () => {
         component={LecturerDashboardScreen}
         options={{ title: "Dashboard" }}
       />
+
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{ title: "Explore" }}
+      />
+
       <Tab.Screen
         name="LecturerProfile"
         component={ProfileScreen}

@@ -1,139 +1,440 @@
 import { StyleSheet } from "react-native";
-import { Colors, Spacing, BorderRadius } from "../../../theme";
+import {
+  Colors,
+  Spacing,
+  BorderRadius,
+  Typography,
+  Shadows,
+} from "../../../theme";
 
 export const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.primary,
   },
-  content: {
-    paddingBottom: Spacing[10],
-  },
+
   header: {
+    backgroundColor: Colors.primary,
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: Spacing[5],
-    paddingTop: Spacing[4],
-    paddingBottom: Spacing[5],
+    paddingBottom: Spacing[8],
   },
+
   headerLeft: {
-    gap: 2,
     flex: 1,
+    minWidth: 0,
+    paddingRight: Spacing[3],
   },
+
+  greetingText: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: Typography.size.sm,
+    fontWeight: Typography.weight.medium,
+    lineHeight: 19,
+  },
+
   headerName: {
-    marginTop: 2,
+    color: Colors.text.inverse,
+    fontSize: Typography.size["2xl"],
+    fontWeight: Typography.weight.bold,
+    lineHeight: 31,
+    marginTop: 1,
   },
-  roleRow: {
+
+  orgRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing[2],
-    marginTop: 4,
+    gap: 5,
+    marginTop: Spacing[1],
+    minWidth: 0,
   },
+
+  orgName: {
+    flex: 1,
+    color: "rgba(255,255,255,0.52)",
+    fontSize: Typography.size.xs,
+    lineHeight: 17,
+  },
+
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing[3],
+    flexShrink: 0,
   },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
+
+  notifBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.border.light,
+    position: "relative",
   },
+
+  notifBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.status.error,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  notifBadgeText: {
+    color: Colors.text.inverse,
+    fontSize: 9,
+    lineHeight: 11,
+    fontWeight: Typography.weight.bold,
+  },
+
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    marginTop: -Spacing[6],
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    overflow: "hidden",
+  },
+
+  content: {
+    paddingTop: Spacing[3],
+    paddingBottom: Spacing[10],
+  },
+
   statsGrid: {
     flexDirection: "row",
-    paddingHorizontal: Spacing[5],
-    gap: Spacing[3],
-    marginBottom: Spacing[2],
+    gap: Spacing[2],
+    paddingHorizontal: Spacing[4],
   },
+
   statCard: {
     flex: 1,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: Colors.border.light,
-  },
-  statIconRow: {
-    marginBottom: Spacing[1],
-  },
-  quickActions: {
-    paddingHorizontal: Spacing[5],
-    marginTop: Spacing[5],
-  },
-  quickActionsGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  quickAction: {
-    alignItems: "center",
-    gap: Spacing[2],
-    flex: 1,
-  },
-  quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.lg,
+    minWidth: 0,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[2],
     alignItems: "center",
     justifyContent: "center",
+    ...Shadows.sm,
   },
+
+  statIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing[1],
+  },
+
+  statIconPrimary: {
+    backgroundColor: Colors.primaryDim,
+  },
+
+  statIconAccent: {
+    backgroundColor: Colors.accentLight,
+  },
+
+  statIconWarning: {
+    backgroundColor: "rgba(245,158,11,0.12)",
+  },
+
+  statNum: {
+    color: Colors.text.primary,
+    fontSize: Typography.size.xl,
+    lineHeight: 27,
+    fontWeight: Typography.weight.bold,
+  },
+
+  statLbl: {
+    color: Colors.text.tertiary,
+    fontSize: Typography.size.xs,
+    lineHeight: 16,
+    fontWeight: Typography.weight.medium,
+    marginTop: 1,
+  },
+
   section: {
     marginTop: Spacing[7],
-    paddingHorizontal: Spacing[5],
+    paddingHorizontal: Spacing[4],
   },
+
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: Spacing[3],
     marginBottom: Spacing[4],
   },
-  courseList: {
+
+  sectionHeading: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
+  projectList: {
     gap: Spacing[3],
   },
-  uploadsCard: {
-    padding: 0,
-    overflow: "hidden",
+
+  projectHero: {
+    padding: Spacing[4],
+    borderRadius: BorderRadius.xl,
+    ...Shadows.md,
   },
-  uploadItem: {
+
+  projectHeroTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: Spacing[3],
+  },
+
+  projectIdentity: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing[3],
-    paddingHorizontal: Spacing[4],
-    paddingVertical: Spacing[3.5],
   },
-  uploadIcon: {
-    width: 38,
-    height: 38,
+
+  projectIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primaryDim,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  projectIdentityText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
+  projectStatus: {
+    maxWidth: "42%",
+    minHeight: 30,
+    paddingHorizontal: Spacing[2],
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.accentLight,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 1,
+  },
+
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.accent,
+    flexShrink: 0,
+  },
+
+  projectTitle: {
+    marginTop: Spacing[4],
+    lineHeight: 25,
+  },
+
+  projectMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: Spacing[2],
+    marginTop: Spacing[3],
+  },
+
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    minWidth: 0,
+  },
+
+  metaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: Colors.text.tertiary,
+  },
+
+  supervisorRow: {
+    minHeight: 54,
+    marginTop: Spacing[4],
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.background,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+  },
+
+  supervisorAvatar: {
+    width: 32,
+    height: 32,
     borderRadius: BorderRadius.md,
     backgroundColor: Colors.accentLight,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  uploadContent: {
+
+  supervisorContent: {
     flex: 1,
-    gap: 3,
+    minWidth: 0,
+    gap: 1,
   },
-  uploadMeta: {
+
+  projectAction: {
+    minHeight: 54,
+    marginTop: Spacing[4],
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.background,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "space-between",
   },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: Colors.border.strong,
+
+  projectActionContent: {
+    gap: 1,
   },
-  uploadDivider: {
-    height: 1,
-    backgroundColor: Colors.border.light,
-    marginLeft: Spacing[4] + 38 + Spacing[3],
+
+  actionGrid: {
+    gap: Spacing[2],
   },
-  sectionFooter: {
-    height: Spacing[4],
+
+  actionCard: {
+    minHeight: 70,
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[2],
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+    ...Shadows.sm,
+  },
+
+  actionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  actionIconPrimary: {
+    backgroundColor: Colors.primaryDim,
+  },
+
+  actionIconAccent: {
+    backgroundColor: Colors.accentLight,
+  },
+
+  actionIconWarning: {
+    backgroundColor: "rgba(245,158,11,0.12)",
+  },
+
+  actionText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+  },
+
+  emptyCard: {
+    minHeight: 86,
+    padding: Spacing[3],
+    borderRadius: BorderRadius.xl,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+  },
+
+  emptyIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primaryDim,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  emptyContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
+  attentionCard: {
+    padding: 0,
+    overflow: "hidden",
+    borderRadius: BorderRadius.xl,
+  },
+
+  attentionHeader: {
+    minHeight: 86,
+    padding: Spacing[3],
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+  },
+
+  attentionIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.accentLight,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  attentionIconSuccess: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: "rgba(34,197,94,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  attentionContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
+  attentionAction: {
+    minHeight: 48,
+    paddingHorizontal: Spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  footerSpace: {
+    height: Spacing[5],
   },
 });

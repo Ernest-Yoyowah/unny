@@ -77,6 +77,7 @@ export type LecturerTabParamList = {
   LecturerCourses: undefined;
   LecturerResources: undefined;
   LecturerProfile: undefined;
+  Search: undefined;
 };
 
 export type AdminTabParamList = {

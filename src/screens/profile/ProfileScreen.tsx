@@ -21,7 +21,6 @@ import {
   Button,
 } from "../../components/ui";
 import { useAuthStore } from "../../store/auth.store";
-import { StudentProfile } from "../../types/user.types";
 import {
   Colors,
   Spacing,
@@ -45,11 +44,12 @@ export const ProfileScreen: React.FC = () => {
     return <ScreenSkeleton />;
   }
 
-  const student =
-    user.role === "student" ? (user as StudentProfile) : undefined;
+  const isStudent = user.role === "student";
+  const isLecturer = user.role === "lecturer";
 
-  const level = student?.level ?? "N/A";
-  const department = student?.department ?? user.departmentId ?? "—";
+  const level = user.level || "—";
+  const studentId = user.studentId || "—";
+  const department = user.departmentId || "—";
 
   const joinedDate = user.joinedAt
     ? new Date(user.joinedAt).toLocaleDateString("en-NG", {
@@ -58,36 +58,67 @@ export const ProfileScreen: React.FC = () => {
       })
     : "—";
 
-  const accountItems = [
-    {
-      label: "Email",
-      value: user.email || "—",
-      icon: "mail-outline",
-      iconBackground: Colors.primaryDim,
-      iconColor: Colors.primary,
-    },
-    {
-      label: "Student ID",
-      value: student?.studentId ?? "—",
-      icon: "id-card-outline",
-      iconBackground: Colors.accentLight,
-      iconColor: Colors.accent,
-    },
-    {
-      label: "Department",
-      value: department,
-      icon: "business-outline",
-      iconBackground: Colors.primaryDim,
-      iconColor: Colors.primary,
-    },
-    {
-      label: "Joined",
-      value: joinedDate,
-      icon: "calendar-outline",
-      iconBackground: Colors.accentLight,
-      iconColor: Colors.accent,
-    },
-  ];
+  const accountItems = isStudent
+    ? [
+        {
+          label: "Email",
+          value: user.email || "—",
+          icon: "mail-outline",
+          iconBackground: Colors.primaryDim,
+          iconColor: Colors.primary,
+        },
+        {
+          label: "Student ID",
+          value: studentId,
+          icon: "id-card-outline",
+          iconBackground: Colors.accentLight,
+          iconColor: Colors.accent,
+        },
+        {
+          label: "Department",
+          value: department,
+          icon: "business-outline",
+          iconBackground: Colors.primaryDim,
+          iconColor: Colors.primary,
+        },
+        {
+          label: "Joined",
+          value: joinedDate,
+          icon: "calendar-outline",
+          iconBackground: Colors.accentLight,
+          iconColor: Colors.accent,
+        },
+      ]
+    : [
+        {
+          label: "Email",
+          value: user.email || "—",
+          icon: "mail-outline",
+          iconBackground: Colors.primaryDim,
+          iconColor: Colors.primary,
+        },
+        {
+          label: "Department",
+          value: department,
+          icon: "business-outline",
+          iconBackground: Colors.primaryDim,
+          iconColor: Colors.primary,
+        },
+        {
+          label: "Role",
+          value: isLecturer ? "Lecturer" : "—",
+          icon: "briefcase-outline",
+          iconBackground: Colors.accentLight,
+          iconColor: Colors.accent,
+        },
+        {
+          label: "Joined",
+          value: joinedDate,
+          icon: "calendar-outline",
+          iconBackground: Colors.accentLight,
+          iconColor: Colors.accent,
+        },
+      ];
 
   const actions = [
     {
@@ -109,7 +140,9 @@ export const ProfileScreen: React.FC = () => {
     {
       icon: "people-outline",
       label: "Supervision Requests",
-      description: "View and manage supervision activity",
+      description: isLecturer
+        ? "View and manage student supervision activity"
+        : "View and manage supervision activity",
       onPress: () => navigation.navigate("SupervisionRequests"),
       iconBackground: Colors.accentLight,
       iconColor: Colors.accent,
@@ -202,7 +235,7 @@ export const ProfileScreen: React.FC = () => {
         </View>
 
         <View style={styles.headerBadges}>
-          {student && (
+          {isStudent && (
             <View style={styles.academicBadge}>
               <Ionicons
                 name="school-outline"
@@ -211,6 +244,18 @@ export const ProfileScreen: React.FC = () => {
               />
 
               <AppText style={styles.academicBadgeText}>Level {level}</AppText>
+            </View>
+          )}
+
+          {isLecturer && (
+            <View style={styles.academicBadge}>
+              <Ionicons
+                name="briefcase-outline"
+                size={13}
+                color={Colors.text.inverse}
+              />
+
+              <AppText style={styles.academicBadgeText}>Lecturer</AppText>
             </View>
           )}
 
@@ -231,19 +276,21 @@ export const ProfileScreen: React.FC = () => {
       >
         <View style={styles.academicCard}>
           <View style={styles.academicCardHeader}>
-            <View>
+            <View style={styles.academicCardHeaderText}>
               <AppText variant="caption" color="tertiary">
-                ACADEMIC PROFILE
+                {isStudent ? "ACADEMIC PROFILE" : "PROFESSIONAL PROFILE"}
               </AppText>
 
               <AppText variant="h5" weight="semibold">
-                Your academic identity
+                {isStudent
+                  ? "Your academic identity"
+                  : "Your professional identity"}
               </AppText>
             </View>
 
             <View style={styles.academicCardIcon}>
               <Ionicons
-                name="school-outline"
+                name={isStudent ? "school-outline" : "briefcase-outline"}
                 size={19}
                 color={Colors.primary}
               />
@@ -253,16 +300,16 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.academicGrid}>
             <View style={styles.academicItem}>
               <AppText variant="caption" color="tertiary">
-                Level
+                {isStudent ? "Level" : "Role"}
               </AppText>
 
               <AppText
                 variant="body2"
                 weight="bold"
-                numberOfLines={1}
+                numberOfLines={2}
                 style={styles.academicValue}
               >
-                {level}
+                {isStudent ? level : "Lecturer"}
               </AppText>
             </View>
 
@@ -610,6 +657,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: Spacing[3],
+  },
+
+  academicCardHeaderText: {
+    flex: 1,
+    minWidth: 0,
   },
 
   academicCardIcon: {
