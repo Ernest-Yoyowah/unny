@@ -3,6 +3,7 @@ import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { CompositeScreenProps } from "@react-navigation/native";
 
 export type RootStackParamList = {
+  Splash: undefined;
   Onboarding: undefined;
   Auth: undefined;
   Main: undefined;
@@ -42,6 +43,14 @@ export type MainStackParamList = {
   VerificationFlow: { organizationId: string };
 
   Notifications: undefined;
+  NotificationDetails: {
+    notificationId: string;
+  };
+  CollaborationRequest: {
+    notificationId: string;
+    projectId: string;
+  };
+
   Settings: undefined;
 
   AddProject: undefined;
@@ -56,37 +65,25 @@ export type MainStackParamList = {
 
 export type StudentTabParamList = {
   StudentHome: undefined;
-
   StudentProjects: undefined;
-
   StudentCourses: undefined;
-
   Search: undefined;
-
   StudentProfile: undefined;
 };
 
 export type LecturerTabParamList = {
   LecturerHome: undefined;
-
   LecturerProjects: undefined;
-
   LecturerCourses: undefined;
-
   LecturerResources: undefined;
-
   LecturerProfile: undefined;
 };
 
 export type AdminTabParamList = {
   AdminHome: undefined;
-
   AdminProjects: undefined;
-
   AdminMembers: undefined;
-
   AdminSettings: undefined;
-
   AdminProfile: undefined;
 };
 

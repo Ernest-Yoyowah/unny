@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     paddingHorizontal: Spacing[5],
-    paddingBottom: Spacing[9],
+    paddingBottom: Spacing[8],
   },
 
   headerLeft: {
@@ -100,7 +100,7 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    marginTop: -Spacing[7],
+    marginTop: -Spacing[6],
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     overflow: "hidden",
@@ -163,6 +163,173 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: Typography.weight.medium,
     marginTop: 1,
+  },
+
+  emptyStatsGrid: {
+    flexDirection: "row",
+    gap: Spacing[2],
+    paddingHorizontal: Spacing[4],
+  },
+
+  emptyStatCard: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 92,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[2],
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+  },
+
+  emptyStatIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing[1],
+  },
+
+  emptyStatNumber: {
+    color: Colors.text.primary,
+    fontSize: Typography.size.lg,
+    lineHeight: 24,
+    fontWeight: Typography.weight.bold,
+  },
+
+  emptyStatLabel: {
+    color: Colors.text.tertiary,
+    fontSize: Typography.size.xs,
+    lineHeight: 16,
+    fontWeight: Typography.weight.medium,
+    marginTop: 1,
+  },
+
+  emptyState: {
+    paddingHorizontal: Spacing[4],
+    paddingTop: Spacing[6],
+  },
+
+  emptyStateHeader: {
+    paddingHorizontal: Spacing[1],
+  },
+
+  emptyStateOverline: {
+    letterSpacing: 1,
+    marginBottom: Spacing[2],
+  },
+
+  emptyStateTitle: {
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.5,
+  },
+
+  emptyStateDescription: {
+    lineHeight: 23,
+    marginTop: Spacing[3],
+    maxWidth: "96%",
+  },
+
+  createProjectCard: {
+    marginTop: Spacing[5],
+    padding: Spacing[4],
+    borderRadius: BorderRadius.xl,
+    ...Shadows.sm,
+  },
+
+  createProjectTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+  },
+
+  createProjectIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primaryDim,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  createProjectHeading: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
+  createProjectDivider: {
+    height: 1,
+    backgroundColor: Colors.border.light,
+    marginVertical: Spacing[4],
+  },
+
+  createProjectDetails: {
+    gap: Spacing[3],
+  },
+
+  createProjectDetail: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+  },
+
+  detailIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  createProjectButton: {
+    minHeight: 50,
+    marginTop: Spacing[5],
+    paddingHorizontal: Spacing[4],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  createProjectButtonText: {
+    color: Colors.text.inverse,
+    fontSize: Typography.size.sm,
+  },
+
+  emptyStateFooter: {
+    marginTop: Spacing[4],
+    paddingHorizontal: Spacing[1],
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing[2],
+  },
+
+  emptyStateFooterIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  emptyStateFooterContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+    paddingTop: 2,
   },
 
   section: {

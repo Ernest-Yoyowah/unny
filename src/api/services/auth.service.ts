@@ -45,6 +45,8 @@ const normalizeAuthResponse = (response: ApiAuthResponse): AuthResponse => {
     isVerified: false,
     joinedAt: "",
     lastActiveAt: "",
+    studentId: profile?.matricNumber ?? "",
+    level: profile?.level ?? "",
   };
 
   return {

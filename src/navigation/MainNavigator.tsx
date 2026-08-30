@@ -15,6 +15,8 @@ import { ProjectDetailsScreen } from "../screens/project/ProjectDetailsScreen";
 import { ProjectTimelineScreen } from "../screens/project/ProjectTimelineScreen";
 import { SupervisionRequestsScreen } from "../screens/project/SupervisionRequestsScreen";
 import { AddProjectScreen } from "@/screens/project/AddProjectScreen";
+import { NotificationDetailsScreen } from "@/screens/notifications/NotificationDetailsScreen";
+import { CollaborationRequestScreen } from "@/screens/collaboration/CollaborationRequestScreen";
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -56,6 +58,15 @@ export const MainNavigator: React.FC = () => {
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
 
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen
+        name="NotificationDetails"
+        component={NotificationDetailsScreen}
+      />
+
+      <Stack.Screen
+        name="CollaborationRequest"
+        component={CollaborationRequestScreen}
+      />
     </Stack.Navigator>
   );
 };

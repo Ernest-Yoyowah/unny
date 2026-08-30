@@ -1,93 +1,141 @@
 import { StyleSheet } from "react-native";
-import { Spacing, Colors } from "../../../theme";
+import { Colors, Spacing, BorderRadius, Shadows } from "../../../theme";
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+
   header: {
+    minHeight: 78,
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[3],
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing[5],
-    paddingTop: Spacing[4],
-    paddingBottom: Spacing[4],
+    gap: Spacing[3],
+    backgroundColor: Colors.background,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border.light,
   },
+
   backBtn: {
     width: 40,
     height: 40,
+    borderRadius: BorderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: -Spacing[2],
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
   },
+
+  headerTitle: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
   headerRight: {
     width: 40,
     alignItems: "flex-end",
+    justifyContent: "center",
   },
+
   list: {
+    paddingHorizontal: Spacing[4],
+    paddingTop: Spacing[2],
     paddingBottom: Spacing[10],
   },
+
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+
   sectionHeader: {
-    paddingHorizontal: Spacing[5],
-    paddingTop: Spacing[5],
+    paddingHorizontal: Spacing[1],
+    paddingTop: Spacing[4],
     paddingBottom: Spacing[2],
   },
+
   sectionTitle: {
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
+
   notifItem: {
-    flexDirection: "row",
-    gap: Spacing[3],
-    paddingHorizontal: Spacing[5],
-    paddingVertical: Spacing[4],
+    minHeight: 94,
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[3],
     backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing[3],
+    ...Shadows.sm,
   },
+
   notifItemUnread: {
-    backgroundColor: `${Colors.accent}06`,
+    backgroundColor: Colors.primaryDim,
+    borderWidth: 1,
+    borderColor: "rgba(37,99,235,0.10)",
   },
+
   notifIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.background,
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
+
   notifIconUnread: {
-    backgroundColor: Colors.accentLight,
+    transform: [{ scale: 1.03 }],
   },
+
   notifContent: {
     flex: 1,
-    gap: 3,
+    minWidth: 0,
+    gap: 4,
   },
+
   notifTitleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: Spacing[2],
   },
+
   notifTitle: {
     flex: 1,
+    minWidth: 0,
   },
+
   unreadDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.primary,
+    marginTop: 6,
     flexShrink: 0,
   },
+
   notifBody: {
-    lineHeight: 18,
+    lineHeight: 19,
   },
+
+  notifFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: Spacing[1],
+  },
+
   notifTime: {
-    marginTop: 2,
+    lineHeight: 16,
   },
+
   itemDivider: {
-    height: 1,
-    backgroundColor: Colors.border.light,
-    marginLeft: Spacing[5] + 40 + Spacing[3],
+    height: Spacing[2],
   },
 });

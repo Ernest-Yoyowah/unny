@@ -13,6 +13,7 @@ export interface ProjectUser {
   avatarUrl?: string;
   specialization?: string;
   level?: string;
+  studentId?: string;
 }
 
 interface RawUser extends ProjectUser {

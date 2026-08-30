@@ -1,20 +1,22 @@
 export type NotificationType =
-  | "course_enrolled"
-  | "course_archived"
-  | "document_uploaded"
-  | "assignment_posted"
-  | "announcement"
-  | "organization_verified"
-  | "enrollment_approved";
+  | "COLLABORATION_INVITE"
+  | "COURSE_ENROLLED"
+  | "COURSE_ARCHIVED"
+  | "DOCUMENT_UPLOADED"
+  | "ASSIGNMENT_POSTED"
+  | "ANNOUNCEMENT"
+  | "ORGANIZATION_VERIFIED"
+  | "ENROLLMENT_APPROVED";
 
 export interface Notification {
   id: string;
   userId: string;
   type: NotificationType;
   title: string;
-  body: string;
+  message: string;
   isRead: boolean;
-  metadata?: Record<string, string>;
+  relatedProjectId?: string;
+  metadata?: Record<string, string> | null;
   createdAt: string;
 }
 

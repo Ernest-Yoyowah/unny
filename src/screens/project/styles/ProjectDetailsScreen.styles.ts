@@ -63,7 +63,7 @@ export const styles = StyleSheet.create({
   hero: {
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing[5],
-    paddingBottom: Spacing[7],
+    paddingBottom: Spacing[4],
   },
 
   heroTop: {
@@ -73,8 +73,8 @@ export const styles = StyleSheet.create({
   },
 
   backButton: {
-    width: 42,
-    height: 42,
+    width: 38,
+    height: 38,
     borderRadius: BorderRadius.full,
     backgroundColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
@@ -97,14 +97,14 @@ export const styles = StyleSheet.create({
   heroMain: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: Spacing[5],
-    gap: Spacing[4],
+    marginTop: Spacing[3],
+    gap: Spacing[3],
   },
 
   heroIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: BorderRadius.xl,
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.lg,
     backgroundColor: Colors.surface,
     alignItems: "center",
     justifyContent: "center",
@@ -118,22 +118,22 @@ export const styles = StyleSheet.create({
 
   heroTitle: {
     color: Colors.text.inverse,
-    fontSize: Typography.size["2xl"],
-    lineHeight: 31,
+    fontSize: Typography.size.xl,
+    lineHeight: 26,
     fontWeight: Typography.weight.bold,
   },
 
   heroSubtitle: {
     color: "rgba(255,255,255,0.58)",
     fontSize: Typography.size.sm,
-    marginTop: 4,
+    marginTop: 2,
   },
 
   heroBottom: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: Spacing[5],
+    marginTop: Spacing[3],
   },
 
   statusBadge: {
@@ -141,14 +141,15 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing[2],
     paddingHorizontal: Spacing[3],
-    paddingVertical: Spacing[2],
+    paddingVertical: Spacing[1],
+    minHeight: 28,
     borderRadius: BorderRadius.full,
     backgroundColor: "rgba(255,255,255,0.12)",
   },
 
   statusDot: {
-    width: 7,
-    height: 7,
+    width: 6,
+    height: 6,
     borderRadius: BorderRadius.full,
     backgroundColor: "#7FE0A4",
   },
@@ -167,7 +168,7 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    marginTop: -Spacing[5],
+    marginTop: -Spacing[3],
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     overflow: "hidden",
@@ -175,7 +176,7 @@ export const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: Spacing[4],
-    paddingTop: Spacing[6],
+    paddingTop: Spacing[4],
     paddingBottom: Spacing[8],
   },
 
@@ -184,7 +185,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing[3],
     padding: Spacing[3],
-    marginBottom: Spacing[5],
+    marginBottom: Spacing[4],
     borderRadius: BorderRadius.lg,
     backgroundColor: Colors.primaryDim,
     borderWidth: 1,
@@ -215,7 +216,7 @@ export const styles = StyleSheet.create({
   },
 
   supervisionOverviewCard: {
-    marginBottom: Spacing[5],
+    marginBottom: Spacing[4],
     padding: Spacing[4],
     borderRadius: BorderRadius.xl,
     backgroundColor: Colors.surface,
@@ -243,7 +244,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing[3],
     padding: Spacing[4],
-    marginBottom: Spacing[5],
+    marginBottom: Spacing[4],
     borderRadius: BorderRadius.xl,
     backgroundColor: Colors.accentLight,
     borderWidth: 1,
@@ -357,7 +358,7 @@ export const styles = StyleSheet.create({
     gap: Spacing[3],
     padding: Spacing[4],
     borderRadius: BorderRadius.xl,
-    marginBottom: Spacing[5],
+    marginBottom: Spacing[4],
     ...Shadows.sm,
   },
 
@@ -393,7 +394,7 @@ export const styles = StyleSheet.create({
     gap: Spacing[3],
     padding: Spacing[4],
     borderRadius: BorderRadius.xl,
-    marginBottom: Spacing[5],
+    marginBottom: Spacing[4],
     borderWidth: 1,
     borderColor: Colors.accent,
     backgroundColor: Colors.accentLight,
@@ -419,13 +420,13 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing[3],
-    marginTop: Spacing[6],
-    marginBottom: Spacing[3],
+    marginTop: Spacing[4],
+    marginBottom: Spacing[2],
   },
 
   sectionHeaderIcon: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.primaryDim,
     alignItems: "center",
@@ -706,7 +707,7 @@ export const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: Colors.border.light,
-    marginVertical: Spacing[5],
+    marginVertical: Spacing[4],
   },
 
   loadingRow: {
@@ -1013,10 +1014,6 @@ export const styles = StyleSheet.create({
     marginTop: Spacing[3],
   },
 
-  /*
-   * Project documents
-   */
-
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1042,11 +1039,5 @@ export const styles = StyleSheet.create({
     gap: 2,
   },
 
-  commentMeta: {
-    // flexDirection: "row",
-    // alignItems: "center",
-    // justifyContent: "space-between",
-    // gap: 8,
-    // marginBottom: 4,
-  },
+  commentMeta: {},
 });

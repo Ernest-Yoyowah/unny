@@ -113,7 +113,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Institutional Email"
-                  placeholder="student@university.edu"
+                  placeholder="student@gctu.edu.gh"
                   keyboardType="email-address"
                   autoComplete="email"
                   textContentType="emailAddress"

@@ -15,7 +15,6 @@ import { Ionicons } from "@expo/vector-icons";
 import {
   AppText,
   Avatar,
-  Badge,
   Divider,
   SectionCard,
   ScreenSkeleton,
@@ -49,9 +48,7 @@ export const ProfileScreen: React.FC = () => {
   const student =
     user.role === "student" ? (user as StudentProfile) : undefined;
 
-  const firstName = user.fullName.trim().split(/\s+/)[0] || user.fullName;
-
-  const level = student?.level ?? 400;
+  const level = student?.level ?? "N/A";
   const department = student?.department ?? user.departmentId ?? "—";
 
   const joinedDate = user.joinedAt
@@ -703,7 +700,6 @@ const styles = StyleSheet.create({
   },
 
   infoLabel: {
-    width: 70,
     flexShrink: 0,
   },
 

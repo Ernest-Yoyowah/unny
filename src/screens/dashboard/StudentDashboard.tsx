@@ -10,7 +10,6 @@ import {
   Avatar,
   Card,
   SectionCard,
-  EmptyState,
   ScreenSkeleton,
 } from "../../components/ui";
 import { useAuthStore } from "../../store/auth.store";
@@ -40,59 +39,46 @@ export const StudentDashboardScreen: React.FC = () => {
     return <ScreenSkeleton />;
   }
 
-  if (!project) {
-    return (
-      <EmptyState
-        icon="rocket-outline"
-        title="Your project starts here"
-        description="Create your final year project workspace to manage documents, progress, reviews, and your academic journey."
-        action={{
-          label: "Create Project",
-          onPress: () => navigation.navigate("AddProject"),
-        }}
-      />
-    );
-  }
-
-  const progress = getProjectProgress(project);
-
   const greeting = (() => {
     const hour = new Date().getHours();
 
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
+    if (hour < 12) {
+      return "Good morning";
+    }
+
+    if (hour < 17) {
+      return "Good afternoon";
+    }
 
     return "Good evening";
   })();
 
   const firstName = user.fullName?.trim().split(/\s+/)[0] || "Student";
 
-  const supervisorName =
-    project.supervisor?.fullName ??
-    project.supervisor?.name ??
-    "Not assigned yet";
-
-  const documents = project.documents ?? [];
+  const documents = project?.documents ?? [];
 
   const openDocuments = () => {
     const firstDocument = documents[0];
 
-    if (firstDocument) {
+    if (firstDocument && project) {
       navigation.navigate("DocumentViewer", {
         documentId: firstDocument.id,
         projectId: project.id,
         title: firstDocument.name ?? firstDocument.title ?? "Project document",
       });
+
       return;
     }
 
-    navigation.navigate("ProjectDetails", {
-      projectId: project.id,
-    });
+    if (project) {
+      navigation.navigate("ProjectDetails", {
+        projectId: project.id,
+      });
+    }
   };
 
-  return (
-    <View style={styles.outerContainer}>
+  const renderHeader = () => (
+    <>
       <StatusBar
         barStyle="light-content"
         backgroundColor={Colors.primary}
@@ -153,57 +139,255 @@ export const StudentDashboardScreen: React.FC = () => {
           <Avatar name={user.fullName} uri={user.avatarUrl} size="md" />
         </View>
       </View>
+    </>
+  );
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="never"
-      >
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <View style={[styles.statIcon, styles.statIconPrimary]}>
-              <Ionicons
-                name="folder-open-outline"
-                size={17}
-                color={Colors.primary}
-              />
-            </View>
+  const renderEmptyStats = () => (
+    <View style={styles.emptyStatsGrid}>
+      <View style={styles.emptyStatCard}>
+        <View style={styles.emptyStatIcon}>
+          <Ionicons
+            name="folder-outline"
+            size={19}
+            color={Colors.text.tertiary}
+          />
+        </View>
 
-            <AppText style={styles.statNum}>1</AppText>
+        <AppText style={styles.emptyStatNumber}>0</AppText>
 
-            <AppText style={styles.statLbl}>Project</AppText>
+        <AppText style={styles.emptyStatLabel}>Projects</AppText>
+      </View>
+
+      <View style={styles.emptyStatCard}>
+        <View style={styles.emptyStatIcon}>
+          <Ionicons
+            name="document-text-outline"
+            size={19}
+            color={Colors.text.tertiary}
+          />
+        </View>
+
+        <AppText style={styles.emptyStatNumber}>0</AppText>
+
+        <AppText style={styles.emptyStatLabel}>Documents</AppText>
+      </View>
+
+      <View style={styles.emptyStatCard}>
+        <View style={styles.emptyStatIcon}>
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={19}
+            color={Colors.text.tertiary}
+          />
+        </View>
+
+        <AppText style={styles.emptyStatNumber}>—</AppText>
+
+        <AppText style={styles.emptyStatLabel}>Progress</AppText>
+      </View>
+    </View>
+  );
+
+  const renderEmptyProject = () => (
+    <View style={styles.emptyState}>
+      <View style={styles.emptyStateHeader}>
+        <AppText
+          variant="overline"
+          color="tertiary"
+          style={styles.emptyStateOverline}
+        >
+          PROJECT WORKSPACE
+        </AppText>
+
+        <AppText variant="h2" weight="bold" style={styles.emptyStateTitle}>
+          Set up your project
+        </AppText>
+
+        <AppText
+          variant="body1"
+          color="secondary"
+          style={styles.emptyStateDescription}
+        >
+          Create your final year project to manage your academic work,
+          documents, milestones, and supervisor reviews in one place.
+        </AppText>
+      </View>
+
+      <Card style={styles.createProjectCard}>
+        <View style={styles.createProjectTop}>
+          <View style={styles.createProjectIcon}>
+            <Ionicons
+              name="folder-open-outline"
+              size={25}
+              color={Colors.primary}
+            />
           </View>
 
-          <View style={styles.statCard}>
-            <View style={[styles.statIcon, styles.statIconAccent]}>
-              <Ionicons
-                name="document-text-outline"
-                size={17}
-                color={Colors.accent}
-              />
-            </View>
+          <View style={styles.createProjectHeading}>
+            <AppText variant="body1" weight="semibold">
+              Create a project workspace
+            </AppText>
 
-            <AppText style={styles.statNum}>{documents.length}</AppText>
-
-            <AppText style={styles.statLbl}>Documents</AppText>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={[styles.statIcon, styles.statIconWarning]}>
-              <Ionicons
-                name="notifications-outline"
-                size={17}
-                color={Colors.status.warning}
-              />
-            </View>
-
-            <AppText style={styles.statNum}>{unreadCount}</AppText>
-
-            <AppText style={styles.statLbl}>Unread</AppText>
+            <AppText variant="caption" color="secondary">
+              Add your project details to get started.
+            </AppText>
           </View>
         </View>
 
+        <View style={styles.createProjectDivider} />
+
+        <View style={styles.createProjectDetails}>
+          <View style={styles.createProjectDetail}>
+            <View style={styles.detailIcon}>
+              <Ionicons
+                name="document-text-outline"
+                size={16}
+                color={Colors.text.secondary}
+              />
+            </View>
+
+            <AppText variant="caption" color="secondary">
+              Manage project documents
+            </AppText>
+          </View>
+
+          <View style={styles.createProjectDetail}>
+            <View style={styles.detailIcon}>
+              <Ionicons
+                name="time-outline"
+                size={16}
+                color={Colors.text.secondary}
+              />
+            </View>
+
+            <AppText variant="caption" color="secondary">
+              Track milestones and progress
+            </AppText>
+          </View>
+
+          <View style={styles.createProjectDetail}>
+            <View style={styles.detailIcon}>
+              <Ionicons
+                name="person-outline"
+                size={16}
+                color={Colors.text.secondary}
+              />
+            </View>
+
+            <AppText variant="caption" color="secondary">
+              Keep supervisor activity organized
+            </AppText>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.createProjectButton}
+          onPress={() => navigation.navigate("AddProject")}
+          activeOpacity={0.82}
+          accessibilityRole="button"
+          accessibilityLabel="Create project"
+        >
+          <AppText style={styles.createProjectButtonText} weight="bold">
+            Create project
+          </AppText>
+
+          <Ionicons
+            name="arrow-forward"
+            size={18}
+            color={Colors.text.inverse}
+          />
+        </TouchableOpacity>
+      </Card>
+
+      <View style={styles.emptyStateFooter}>
+        <View style={styles.emptyStateFooterIcon}>
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={17}
+            color={Colors.text.tertiary}
+          />
+        </View>
+
+        <View style={styles.emptyStateFooterContent}>
+          <AppText variant="caption" weight="semibold">
+            Your workspace is private to you.
+          </AppText>
+
+          <AppText variant="caption" color="secondary">
+            Project information and documents are managed securely within your
+            academic workspace.
+          </AppText>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderStats = () => {
+    if (!project) {
+      return renderEmptyStats();
+    }
+
+    return (
+      <View style={styles.statsGrid}>
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, styles.statIconPrimary]}>
+            <Ionicons
+              name="folder-open-outline"
+              size={17}
+              color={Colors.primary}
+            />
+          </View>
+
+          <AppText style={styles.statNum}>{project ? 1 : 0}</AppText>
+
+          <AppText style={styles.statLbl}>Project</AppText>
+        </View>
+
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, styles.statIconAccent]}>
+            <Ionicons
+              name="document-text-outline"
+              size={17}
+              color={Colors.accent}
+            />
+          </View>
+
+          <AppText style={styles.statNum}>{documents.length}</AppText>
+
+          <AppText style={styles.statLbl}>Documents</AppText>
+        </View>
+
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, styles.statIconWarning]}>
+            <Ionicons
+              name="notifications-outline"
+              size={17}
+              color={Colors.status.warning}
+            />
+          </View>
+
+          <AppText style={styles.statNum}>{unreadCount}</AppText>
+
+          <AppText style={styles.statLbl}>Unread</AppText>
+        </View>
+      </View>
+    );
+  };
+
+  const renderProjectDashboard = () => {
+    if (!project) {
+      return renderEmptyProject();
+    }
+
+    const progress = getProjectProgress(project);
+
+    const supervisorName =
+      project.supervisor?.fullName ??
+      project.supervisor?.name ??
+      "Not assigned yet";
+
+    return (
+      <>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeading}>
@@ -546,7 +730,9 @@ export const StudentDashboardScreen: React.FC = () => {
                     }
                     activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={`Open ${document.title ?? "project document"}`}
+                    accessibilityLabel={`Open ${
+                      document.title ?? "project document"
+                    }`}
                   >
                     <View style={styles.fileIcon}>
                       <Ionicons
@@ -625,6 +811,22 @@ export const StudentDashboardScreen: React.FC = () => {
             )}
           </SectionCard>
         </View>
+      </>
+    );
+  };
+
+  return (
+    <View style={styles.outerContainer}>
+      {renderHeader()}
+
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
+      >
+        {renderStats()}
+        {renderProjectDashboard()}
 
         <View style={styles.footerSpace} />
       </ScrollView>

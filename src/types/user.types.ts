@@ -12,12 +12,14 @@ export interface User {
   isVerified: boolean;
   joinedAt: string;
   lastActiveAt: string;
+  studentId: string;
+  level?: string;
 }
 
 export interface StudentProfile extends User {
   role: "student";
   studentId: string;
-  level: number;
+  level: string;
   department: string;
   enrolledCourseIds: string[];
   pinnedCourseIds: string[];

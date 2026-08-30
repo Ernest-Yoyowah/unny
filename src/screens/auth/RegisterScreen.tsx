@@ -217,7 +217,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             render={({ field }) => (
               <Input
                 label="Institutional Email"
-                placeholder="you@university.edu"
+                placeholder="you@gctu.edu.gh"
                 keyboardType="email-address"
                 autoComplete="email"
                 value={field.value}
@@ -253,8 +253,8 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 name="matricNumber"
                 render={({ field }) => (
                   <Input
-                    label="Matriculation Number"
-                    placeholder="CSC/2021/001"
+                    label="Student ID"
+                    placeholder="423******8"
                     value={field.value}
                     onChangeText={field.onChange}
                     onBlur={field.onBlur}
@@ -268,7 +268,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 render={({ field }) => (
                   <Input
                     label="Level"
-                    placeholder="400L"
+                    placeholder="400"
                     value={field.value}
                     onChangeText={field.onChange}
                     onBlur={field.onBlur}
