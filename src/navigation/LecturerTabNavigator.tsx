@@ -8,6 +8,7 @@ import { ProfileScreen } from "../screens/profile/ProfileScreen";
 import { Colors, Typography, Spacing, Shadows } from "../theme";
 import { LecturerDashboardScreen } from "@/screens/dashboard/LecturerDashboard";
 import { SearchScreen } from "@/screens/explorer/SearchScreen";
+import { SupervisorReviewScreen } from "@/screens/review/SupervisorReviewScreen";
 
 const Tab = createBottomTabNavigator<LecturerTabParamList>();
 
@@ -80,6 +81,14 @@ export const LecturerTabNavigator: React.FC = () => {
         name="LecturerHome"
         component={LecturerDashboardScreen}
         options={{ title: "Dashboard" }}
+      />
+
+      <Tab.Screen
+        name="SupervisorReview"
+        component={SupervisorReviewScreen}
+        options={{
+          headerShown: false,
+        }}
       />
 
       <Tab.Screen

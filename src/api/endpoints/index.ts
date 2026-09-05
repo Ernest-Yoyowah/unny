@@ -75,6 +75,14 @@ export const Endpoints = {
     supervision: (id: string) => `/projects/${id}/supervision-requests`,
   },
 
+  supervision: {
+    projects: "/projects/mine",
+    reviewQueue: "/projects/review-queue",
+    reviews: (projectId: string) => `/projects/${projectId}/reviews`,
+    requests: (projectId: string) =>
+      `/projects/${projectId}/supervision-requests`,
+  },
+
   collaborationInvites: {
     respond: (id: string) => `/collaboration-invites/${id}`,
   },
