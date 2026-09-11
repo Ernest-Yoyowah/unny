@@ -11,13 +11,7 @@
       "translucent": false,
       "hidden": false
     },
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#1C2B4A"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.unny.app",
@@ -27,30 +21,29 @@
       }
     },
     "android": {
+      "package": "com.unny.app",
       "adaptiveIcon": {
         "backgroundColor": "#1C2B4A"
       },
-      "package": "com.unny.app",
-      "permissions": [
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
+      "permissions": ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
     },
     "plugins": [
       "expo-secure-store",
       "expo-font",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1C2B4A",
+          "resizeMode": "contain"
+        }
+      ],
       "expo-status-bar"
     ],
     "scheme": "unny",
-    "experiments": {
-      "newArchEnabled": false
-    },
     "extra": {
       "eas": {
         "projectId": "94ea23cd-6d96-40b2-aec6-57ed708695ce"
       }
-    },
-    "owner": "ernest-yoyowah-new"
+    }
   }
 }
