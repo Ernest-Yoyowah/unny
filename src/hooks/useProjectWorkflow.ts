@@ -10,6 +10,7 @@ export const useProjectReviews = (projectId: string, enabled = true) => {
     queryKey: ["project-reviews", projectId],
     queryFn: () => ProjectWorkflowService.getReviews(projectId),
     enabled: Boolean(projectId) && enabled,
+    staleTime: 30000,
   });
 };
 
@@ -25,6 +26,7 @@ export const useSupervisionRequests = () => {
   return useQuery({
     queryKey: ["supervision-requests"],
     queryFn: () => ProjectWorkflowService.getSupervisionRequests(),
+    staleTime: 30000,
   });
 };
 
@@ -127,7 +129,48 @@ export const useProjectActions = (projectId: string) => {
   const comment = useMutation({
     mutationFn: (body: string) =>
       ProjectWorkflowService.addComment(projectId, body),
-    onSuccess: () => {
+    onSuccess: (newComment) => {
+      queryClient.setQueryData(
+        ["projects", "detail", projectId],
+        (current: any) => {
+          if (!current) {
+            return current;
+          }
+
+          const existingComments = Array.isArray(current.comments)
+            ? current.comments
+            : [];
+          const nextComments = existingComments.some(
+            (item: any) => item.id === newComment?.id,
+          )
+            ? existingComments
+            : [...existingComments, newComment];
+
+          return { ...current, comments: nextComments };
+        },
+      );
+
+      queryClient.setQueryData(["project", projectId], (current: any) => {
+        if (!current) {
+          return current;
+        }
+
+        const existingComments = Array.isArray(current.comments)
+          ? current.comments
+          : [];
+        const nextComments = existingComments.some(
+          (item: any) => item.id === newComment?.id,
+        )
+          ? existingComments
+          : [...existingComments, newComment];
+
+        return { ...current, comments: nextComments };
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["projects", "detail", projectId],
+      });
+
       queryClient.invalidateQueries({
         queryKey: ["project", projectId],
       });
@@ -160,6 +203,10 @@ export const useProjectCollaboratorActions = (projectId: string) => {
 
     queryClient.invalidateQueries({
       queryKey: ["project", projectId],
+    });
+
+    queryClient.invalidateQueries({
+      queryKey: ["projects", "detail", projectId],
     });
   };
 
@@ -221,7 +268,7 @@ export const useRespondToSupervision = () => {
       id: string;
       status: "ACCEPTED" | "REJECTED";
     }) => ProjectWorkflowService.respondToSupervision(id, status),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["supervision-requests"],
       });
@@ -232,6 +279,10 @@ export const useRespondToSupervision = () => {
 
       queryClient.invalidateQueries({
         queryKey: ["project"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["projects", "detail", variables.id],
       });
     },
   });

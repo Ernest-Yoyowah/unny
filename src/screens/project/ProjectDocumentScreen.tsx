@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -18,6 +19,10 @@ import { formatBytes } from "../../utils/format.utils";
 import { getCategoryLabel, getFileTypeIcon } from "../../utils/format.utils";
 import { formatDate } from "../../utils/date.utils";
 import { styles } from "./styles/ProjectDocumentScreen.styles";
+import {
+  getProjectDocumentTitle,
+  normalizeStorageUrl,
+} from "../../api/services/project.service";
 
 type Props = NativeStackScreenProps<MainStackParamList, "DocumentViewer">;
 
@@ -29,7 +34,22 @@ export const DocumentViewerScreen: React.FC<Props> = ({
   const insets = useSafeAreaInsets();
   const { data: project, isLoading } = useProject(projectId ?? courseId ?? "");
 
-  const source = project?.documents?.find((item) => item.id === documentId);
+  const source =
+    project?.documents?.find((item) => item.id === documentId) ??
+    (project && (project.fileUrl || project.fileKey)
+      ? {
+          id: project.id,
+          name: getProjectDocumentTitle(
+            project.fileKey ?? project.fileUrl ?? title,
+          ),
+          title: getProjectDocumentTitle(
+            project.fileKey ?? project.fileUrl ?? title,
+          ),
+          type: "FILE",
+          url: project.fileUrl ?? project.fileKey,
+        }
+      : undefined);
+
   const document = source
     ? {
         title: source.name ?? source.title ?? title,
@@ -39,7 +59,7 @@ export const DocumentViewerScreen: React.FC<Props> = ({
         uploadedAt:
           project?.updatedAt ?? project?.createdAt ?? new Date().toISOString(),
         downloadCount: 0,
-        downloadUrl: source.url,
+        downloadUrl: normalizeStorageUrl(source.url),
         category: "supplementary" as const,
         week: undefined,
       }
@@ -156,20 +176,36 @@ export const DocumentViewerScreen: React.FC<Props> = ({
                     color={Colors.text.inverse}
                   />
                 }
-                onPress={() => {
-                  if (document.downloadUrl) {
-                    Linking.openURL(document.downloadUrl).catch(() => {});
+                onPress={async () => {
+                  if (!document.downloadUrl) {
+                    Alert.alert(
+                      "Download unavailable",
+                      "This file does not have a valid download URL yet.",
+                    );
+                    return;
+                  }
+
+                  try {
+                    const canOpen = await Linking.canOpenURL(
+                      document.downloadUrl,
+                    );
+
+                    if (canOpen) {
+                      await Linking.openURL(document.downloadUrl);
+                      return;
+                    }
+
+                    Alert.alert(
+                      "Download unavailable",
+                      "This file cannot be opened on this device.",
+                    );
+                  } catch {
+                    Alert.alert(
+                      "Download failed",
+                      "We could not open this file for download.",
+                    );
                   }
                 }}
-              />
-              <Button
-                variant="outline"
-                size="lg"
-                label="View in Course"
-                fullWidth
-                // onPress={() => {
-                //   navigation.replace("CourseDetails", { courseId });
-                // }}
               />
             </View>
           </>

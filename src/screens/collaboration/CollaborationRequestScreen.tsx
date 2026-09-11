@@ -14,6 +14,7 @@ import { AppText, Button, Card } from "../../components/ui";
 import { useNotifications } from "../../hooks/useNotifications";
 import {
   useAcceptCollaborationInvite,
+  useMyCollaborationInvites,
   useRejectCollaborationInvite,
 } from "./hooks/useCollaboration";
 import { Colors, Spacing, BorderRadius } from "../../theme";
@@ -29,6 +30,8 @@ export const CollaborationRequestScreen: React.FC<Props> = ({
   const insets = useSafeAreaInsets();
 
   const { data } = useNotifications();
+  const { data: collaborationInvites, isLoading: isLoadingInvites } =
+    useMyCollaborationInvites();
 
   const acceptInvite = useAcceptCollaborationInvite();
   const rejectInvite = useRejectCollaborationInvite();
@@ -37,15 +40,31 @@ export const CollaborationRequestScreen: React.FC<Props> = ({
     (item) => item.id === route.params.notificationId,
   );
 
+  const invitation = collaborationInvites?.data.find(
+    (item) =>
+      item.projectId === route.params.projectId ||
+      item.project?.id === route.params.projectId,
+  );
+
   const projectTitle =
-    notification?.message?.match(/"([^"]+)"/)?.[1] ?? "Academic project";
+    invitation?.project?.title ??
+    notification?.message?.match(/"([^"]+)"/)?.[1] ??
+    "Academic project";
 
   const isProcessing = acceptInvite.isPending || rejectInvite.isPending;
 
   const handleAccept = async () => {
+    if (!invitation?.id) {
+      Alert.alert(
+        "Invitation unavailable",
+        "We couldn't find the collaboration invite for this project.",
+      );
+      return;
+    }
+
     try {
       await acceptInvite.mutateAsync({
-        projectId: route.params.projectId,
+        inviteId: invitation.id,
       });
 
       Alert.alert(
@@ -53,8 +72,13 @@ export const CollaborationRequestScreen: React.FC<Props> = ({
         "You have successfully joined the collaboration.",
         [
           {
-            text: "Continue",
-            onPress: () => navigation.popToTop(),
+            text: "View project",
+            onPress: () => {
+              navigation.popToTop();
+              navigation.navigate("ProjectDetails", {
+                projectId: route.params.projectId,
+              });
+            },
           },
         ],
       );
@@ -67,6 +91,14 @@ export const CollaborationRequestScreen: React.FC<Props> = ({
   };
 
   const handleReject = () => {
+    if (!invitation?.id) {
+      Alert.alert(
+        "Invitation unavailable",
+        "We couldn't find the collaboration invite for this project.",
+      );
+      return;
+    }
+
     Alert.alert(
       "Decline invitation?",
       "You won't be added to this project if you decline this invitation.",
@@ -81,7 +113,7 @@ export const CollaborationRequestScreen: React.FC<Props> = ({
           onPress: async () => {
             try {
               await rejectInvite.mutateAsync({
-                projectId: route.params.projectId,
+                inviteId: invitation.id,
               });
 
               Alert.alert(
@@ -220,11 +252,11 @@ export const CollaborationRequestScreen: React.FC<Props> = ({
             size="lg"
             label="Accept invitation"
             fullWidth
-            disabled={isProcessing}
-            isLoading={acceptInvite.isPending}
+            disabled={isProcessing || isLoadingInvites || !invitation}
+            isLoading={acceptInvite.isPending || isLoadingInvites}
             onPress={handleAccept}
             rightIcon={
-              !acceptInvite.isPending ? (
+              !acceptInvite.isPending && !isLoadingInvites ? (
                 <Ionicons
                   name="checkmark"
                   size={19}
@@ -237,7 +269,7 @@ export const CollaborationRequestScreen: React.FC<Props> = ({
           <TouchableOpacity
             style={styles.rejectButton}
             onPress={handleReject}
-            disabled={isProcessing}
+            disabled={isProcessing || isLoadingInvites || !invitation}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Decline collaboration invitation"

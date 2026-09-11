@@ -69,6 +69,22 @@ export const styles = StyleSheet.create({
     maxWidth: 300,
   },
 
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+    flexShrink: 0,
+  },
+
+  refreshButton: {
+    width: 38,
+    height: 38,
+    borderRadius: BorderRadius.full,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   headerCount: {
     minWidth: 58,
     height: 58,

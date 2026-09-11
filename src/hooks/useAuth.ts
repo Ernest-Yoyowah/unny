@@ -8,6 +8,7 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (credentials: LoginCredentials) =>
       AuthService.login(credentials),
+    retry: false,
     onSuccess: async ({ user, tokens }) => {
       await setAuth(user, tokens);
     },
@@ -21,6 +22,7 @@ export const useRegister = () => {
       const { confirmPassword: _, ...rest } = payload;
       return AuthService.register(rest);
     },
+    retry: false,
     onSuccess: async ({ user, tokens }) => {
       await setAuth(user, tokens);
     },

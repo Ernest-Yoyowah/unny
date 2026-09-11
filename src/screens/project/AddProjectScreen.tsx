@@ -92,7 +92,7 @@ export const AddProjectScreen: React.FC = () => {
     if (!trimmedTitle) {
       Alert.alert(
         "Complete your project",
-        "Enter a project title before submitting.",
+        "Enter a project title before creating the project.",
       );
 
       return;
@@ -110,13 +110,11 @@ export const AddProjectScreen: React.FC = () => {
     if (!user) {
       Alert.alert(
         "Session unavailable",
-        "Sign in again before submitting your project.",
+        "Sign in again before creating your project.",
       );
 
       return;
     }
-
-    let stage = "project creation";
 
     try {
       const project = await createProject.mutateAsync({
@@ -132,39 +130,21 @@ export const AddProjectScreen: React.FC = () => {
           .map((tag) => tag.id),
       });
 
-      if (selectedFiles.length > 0) {
-        stage = "PDF upload";
-        for (const file of selectedFiles) {
-          await ProjectService.uploadReport(project.id, {
-            uri: file.uri,
-            name: file.name || `project-report-${Date.now()}.pdf`,
-            mimeType: file.mimeType || "application/pdf",
-          });
-        }
-      }
-      stage = "review submission";
-      await submitProject.mutateAsync(project.id);
+      navigation.replace("ProjectDetails", {
+        projectId: project.id,
+      });
 
       Alert.alert(
-        "Project submitted",
-        "Your project is now waiting for faculty review.",
-        [
-          {
-            text: "Done",
-
-            onPress: () =>
-              navigation.replace("ProjectDetails", {
-                projectId: project.id,
-              }),
-          },
-        ],
+        "Project created",
+        "Your project draft is ready. Add a report and submit for review from the project details page.",
+        [{ text: "OK" }],
       );
     } catch (error) {
-      Alert.alert(`${stage} failed`, extractApiError(error).message);
+      Alert.alert("Project creation failed", extractApiError(error).message);
     }
   };
 
-  const isSubmitting = createProject.isPending || submitProject.isPending;
+  const isSubmitting = createProject.isPending;
 
   return (
     <View style={styles.outerContainer}>
@@ -345,40 +325,50 @@ export const AddProjectScreen: React.FC = () => {
               )}
 
               {!directory.isLoading &&
-                directory.supervisors.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[
-                      styles.selectField,
+                directory.supervisors.map((item) => {
+                  const isSelected = supervisorId === item.id;
 
-                      supervisorId === item.id && styles.tagSelected,
-                    ]}
-                    onPress={() => setSupervisorId(item.id)}
-                  >
-                    <View style={styles.selectContent}>
-                      <AppText variant="body2">
-                        {item.fullName ??
-                          item.name ??
-                          item.email ??
-                          "Supervisor"}
-                      </AppText>
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[
+                        styles.selectField,
+                        isSelected && styles.selectFieldSelected,
+                      ]}
+                      onPress={() => setSupervisorId(item.id)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.selectContent}>
+                        <AppText
+                          variant="body2"
+                          color={isSelected ? "inverse" : undefined}
+                        >
+                          {item.fullName ??
+                            item.name ??
+                            item.email ??
+                            "Supervisor"}
+                        </AppText>
 
-                      <AppText variant="caption" color="secondary">
-                        {item.department ?? "Available supervisor"}
-                      </AppText>
-                    </View>
+                        <AppText
+                          variant="caption"
+                          color={isSelected ? "inverse" : "secondary"}
+                        >
+                          {item.department ?? "Available supervisor"}
+                        </AppText>
+                      </View>
 
-                    <Ionicons
-                      name={
-                        supervisorId === item.id
-                          ? "checkmark-circle"
-                          : "chevron-forward"
-                      }
-                      size={18}
-                      color={Colors.primary}
-                    />
-                  </TouchableOpacity>
-                ))}
+                      <Ionicons
+                        name={
+                          isSelected ? "checkmark-circle" : "chevron-forward"
+                        }
+                        size={18}
+                        color={
+                          isSelected ? Colors.text.inverse : Colors.primary
+                        }
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
 
               {!directory.isLoading && directory.supervisors.length === 0 && (
                 <AppText variant="caption" color="secondary">

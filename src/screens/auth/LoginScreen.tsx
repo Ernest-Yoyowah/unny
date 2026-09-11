@@ -53,6 +53,10 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   }, [apiError]);
 
   const onSubmit = (values: FormValues) => {
+    if (isPending) {
+      return;
+    }
+
     login(values);
   };
 

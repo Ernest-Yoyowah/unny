@@ -1,4 +1,7 @@
-import { Project } from "../api/services/project.service";
+import {
+  Project,
+  normalizeProjectStatus,
+} from "../api/services/project.service";
 
 export interface ProjectMilestone {
   title: string;
@@ -13,12 +16,20 @@ export const getProjectMilestones = (project: Project): ProjectMilestone[] => [
   },
   {
     title: "Submitted for review",
-    completed: ["PENDING", "APPROVED"].includes(project.status),
+    completed: ["PENDING", "PENDING REVIEW", "APPROVED"].includes(
+      project.status,
+    ),
   },
   { title: "Approved for archive", completed: project.status === "APPROVED" },
 ];
 
 export const getProjectProgress = (project: Project): number => {
+  const normalizedStatus = normalizeProjectStatus(project.status);
+
+  if (normalizedStatus === "APPROVED") {
+    return 100;
+  }
+
   const milestones = getProjectMilestones(project);
   return Math.round(
     (milestones.filter((milestone) => milestone.completed).length /

@@ -17,7 +17,10 @@ export type AuthStackParamList = {
 
 export type MainStackParamList = {
   StudentTabs: undefined;
-  LecturerTabs: undefined;
+  LecturerTabs?: {
+    screen?: keyof LecturerTabParamList;
+    params?: Record<string, unknown>;
+  };
   AdminTabs: undefined;
 
   CourseDetails: { courseId: string };

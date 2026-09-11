@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CreateReviewPayload,
+  ProjectReview,
   SupervisionService,
 } from "../api/services/supervision.service";
 
@@ -25,6 +26,7 @@ export const useReviewQueue = () => {
   return useQuery({
     queryKey: supervisionKeys.reviewQueue(),
     queryFn: SupervisionService.reviewQueue,
+    staleTime: 30000,
   });
 };
 
@@ -92,7 +94,40 @@ export const useCommentOnProject = () => {
       comment: string;
     }) => SupervisionService.comment(projectId, comment),
 
-    onSuccess: (_, variables) => {
+    onSuccess: (response, variables) => {
+      queryClient.setQueryData(
+        supervisionKeys.reviews(variables.projectId),
+        (current: ProjectReview[] | undefined) => {
+          if (!current) {
+            return [response];
+          }
+
+          return current.some((item) => item.id === response.id)
+            ? current
+            : [response, ...current];
+        },
+      );
+
+      queryClient.setQueryData(
+        ["project", variables.projectId],
+        (current: any) => {
+          if (!current) {
+            return current;
+          }
+
+          const comments = Array.isArray(current.comments)
+            ? current.comments
+            : [];
+          const nextComments = comments.some(
+            (item: any) => item.id === response.id,
+          )
+            ? comments
+            : [{ ...response, body: response.comment }, ...comments];
+
+          return { ...current, comments: nextComments };
+        },
+      );
+
       queryClient.invalidateQueries({
         queryKey: supervisionKeys.reviewQueue(),
       });
@@ -103,6 +138,10 @@ export const useCommentOnProject = () => {
 
       queryClient.invalidateQueries({
         queryKey: ["project", variables.projectId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["projects", "detail", variables.projectId],
       });
     },
   });
@@ -131,6 +170,10 @@ export const useApproveProject = () => {
 
       queryClient.invalidateQueries({
         queryKey: supervisionKeys.reviews(variables.projectId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["projects", "detail", variables.projectId],
       });
 
       queryClient.invalidateQueries({
@@ -166,35 +209,7 @@ export const useRejectProject = () => {
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["project", variables.projectId],
-      });
-    },
-  });
-};
-
-export const useRequestProjectChanges = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      projectId,
-      comment,
-    }: {
-      projectId: string;
-      comment: string;
-    }) => SupervisionService.requestChanges(projectId, comment),
-
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: supervisionKeys.reviewQueue(),
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: supervisionKeys.projects(),
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: supervisionKeys.reviews(variables.projectId),
+        queryKey: ["projects", "detail", variables.projectId],
       });
 
       queryClient.invalidateQueries({

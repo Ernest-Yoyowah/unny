@@ -15,13 +15,15 @@ interface ProgressBarProps {
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   value,
   max = 100,
-  color = Colors.primary,
+  color,
   trackColor = Colors.border.light,
   height = 6,
   style,
   rounded = true,
 }) => {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+  const resolvedColor =
+    color ?? (value >= max ? Colors.status.success : Colors.primary);
 
   return (
     <View
@@ -40,7 +42,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           styles.fill,
           {
             width: `${percentage}%`,
-            backgroundColor: color,
+            backgroundColor: resolvedColor,
             borderRadius: rounded ? height / 2 : 0,
             height,
           },

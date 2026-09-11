@@ -1,5 +1,11 @@
 import React from "react";
-import { FlatList, StatusBar, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  StatusBar,
+  TouchableOpacity,
+  View,
+  RefreshControl,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,6 +17,7 @@ import {
   ProgressBar,
   ScreenSkeleton,
 } from "../../components/ui";
+import { getProjectStatusPresentation } from "../../api/services/project.service";
 import { Colors, Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
 import { useMyProjects } from "../../hooks/useProject";
@@ -22,7 +29,7 @@ type Nav = NativeStackNavigationProp<MainStackParamList>;
 export const MyProjectsScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { data: projects, isLoading } = useMyProjects();
+  const { data: projects, isLoading, refetch, isFetching } = useMyProjects();
 
   if (isLoading) {
     return <ScreenSkeleton />;
@@ -72,6 +79,7 @@ export const MyProjectsScreen: React.FC = () => {
   }) => {
     const firstDocument = project.documents?.[0];
     const progress = getProjectProgress(project);
+    const statusPresentation = getProjectStatusPresentation(project.status);
     const supervisor =
       project.supervisor?.fullName ??
       project.supervisor?.name ??
@@ -121,16 +129,30 @@ export const MyProjectsScreen: React.FC = () => {
                   FINAL YEAR PROJECT
                 </AppText>
 
-                <View style={styles.status}>
-                  <View style={styles.statusDot} />
+                <View
+                  style={[
+                    styles.status,
+                    {
+                      backgroundColor: statusPresentation.badgeBackground,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.statusDot,
+                      {
+                        backgroundColor: statusPresentation.dotColor,
+                      },
+                    ]}
+                  />
 
                   <AppText
                     variant="caption"
-                    color="accent"
                     weight="semibold"
                     numberOfLines={1}
+                    style={{ color: statusPresentation.textColor }}
                   >
-                    {project.status || "In progress"}
+                    {statusPresentation.label}
                   </AppText>
                 </View>
               </View>
@@ -234,7 +256,10 @@ export const MyProjectsScreen: React.FC = () => {
               </AppText>
             </View>
 
-            <ProgressBar value={progress} />
+            <ProgressBar
+              value={progress}
+              color={progress >= 100 ? Colors.status.success : Colors.primary}
+            />
           </View>
 
           <View style={styles.supervisor}>
@@ -454,6 +479,20 @@ export const MyProjectsScreen: React.FC = () => {
         </View>
 
         <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={() => refetch()}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh my projects"
+          >
+            <Ionicons
+              name={isFetching ? "sync-outline" : "refresh-outline"}
+              size={20}
+              color={Colors.text.inverse}
+            />
+          </TouchableOpacity>
+
           <View style={styles.headerCount}>
             <AppText style={styles.headerCountNumber}>
               {projects.length}
@@ -472,6 +511,14 @@ export const MyProjectsScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderProject}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching}
+              onRefresh={() => refetch()}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
+            />
+          }
           contentContainerStyle={[
             styles.content,
             {

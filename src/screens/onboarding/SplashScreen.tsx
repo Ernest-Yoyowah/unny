@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   background: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   backgroundOrbOne: {
     position: "absolute",
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     left: -SCREEN_WIDTH * 0.38,
   },
   particles: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   particle: {
     position: "absolute",

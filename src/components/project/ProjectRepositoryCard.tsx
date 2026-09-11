@@ -41,11 +41,11 @@ export const ProjectRepositoryCard: React.FC<Props> = ({
           <View style={styles.status}>
             <AppText
               variant="caption"
-              color="accent"
+              color="success"
               weight="semibold"
               numberOfLines={1}
             >
-              {project.status}
+              {project.status || "Approved"}
             </AppText>
           </View>
         </View>
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
 
   status: {
     maxWidth: "55%",
-    backgroundColor: Colors.accentLight,
+    backgroundColor: Colors.status.successLight,
     paddingHorizontal: Spacing[3],
     paddingVertical: Spacing[1],
     borderRadius: BorderRadius.full,

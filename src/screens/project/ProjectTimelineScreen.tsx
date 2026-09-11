@@ -12,6 +12,7 @@ import {
   Shadows,
   Typography,
 } from "../../theme";
+import { getProjectStatusPresentation } from "../../api/services/project.service";
 import { useProject } from "../../hooks/useProject";
 import { MainStackParamList } from "../../navigation/types";
 import {
@@ -65,6 +66,7 @@ export const ProjectTimelineScreen: React.FC<Props> = ({
 
   const progress = getProjectProgress(project);
   const milestones = getProjectMilestones(project);
+  const statusPresentation = getProjectStatusPresentation(project.status);
 
   const completedCount = milestones.filter((item) => item.completed).length;
   const remainingCount = Math.max(milestones.length - completedCount, 0);
@@ -160,14 +162,21 @@ export const ProjectTimelineScreen: React.FC<Props> = ({
               </AppText>
             </View>
 
-            <View style={styles.statusBadge}>
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor: statusPresentation.badgeBackground,
+                },
+              ]}
+            >
               <AppText
                 variant="caption"
-                color="accent"
                 weight="semibold"
                 numberOfLines={1}
+                style={{ color: statusPresentation.textColor }}
               >
-                {project.status}
+                {statusPresentation.label}
               </AppText>
             </View>
           </View>
@@ -203,6 +212,8 @@ export const ProjectTimelineScreen: React.FC<Props> = ({
                   styles.progressFill,
                   {
                     width: `${progress}%`,
+                    backgroundColor:
+                      progress >= 100 ? Colors.status.success : Colors.primary,
                   },
                 ]}
               />

@@ -71,7 +71,7 @@ export interface SupervisionRequest {
 
 export interface ProjectReview {
   id: string;
-  action: "COMMENTED" | "APPROVED" | "REJECTED";
+  action: "COMMENTED" | "APPROVED" | "REJECTED" | "CHANGES_REQUESTED";
   comment?: string;
   createdAt?: string;
   reviewer?: ProjectUser;
@@ -190,7 +190,13 @@ export const ProjectWorkflowService = {
     payload: Partial<
       Pick<
         Project,
-        "title" | "abstract" | "academicYear" | "department" | "repoUrl"
+        | "title"
+        | "abstract"
+        | "academicYear"
+        | "department"
+        | "repoUrl"
+        | "fileUrl"
+        | "fileKey"
       >
     >,
   ) => {

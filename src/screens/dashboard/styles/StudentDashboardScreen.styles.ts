@@ -150,6 +150,10 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(245,158,11,0.12)",
   },
 
+  statIconSuccess: {
+    backgroundColor: "rgba(34,197,94,0.12)",
+  },
+
   statNum: {
     color: Colors.text.primary,
     fontSize: Typography.size.xl,
@@ -157,12 +161,29 @@ export const styles = StyleSheet.create({
     fontWeight: Typography.weight.bold,
   },
 
+  statusBadge: {
+    maxWidth: "100%",
+    paddingHorizontal: Spacing[2],
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing[1],
+  },
+
+  statusBadgeText: {
+    fontSize: Typography.size.xs,
+    lineHeight: 16,
+    fontWeight: Typography.weight.semibold,
+    textAlign: "center",
+  },
+
   statLbl: {
     color: Colors.text.tertiary,
     fontSize: Typography.size.xs,
     lineHeight: 16,
     fontWeight: Typography.weight.medium,
-    marginTop: 1,
+    marginTop: 4,
   },
 
   emptyStatsGrid: {

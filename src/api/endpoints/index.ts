@@ -84,6 +84,7 @@ export const Endpoints = {
   },
 
   collaborationInvites: {
+    mine: "/collaboration-invites/mine",
     respond: (id: string) => `/collaboration-invites/${id}`,
   },
 

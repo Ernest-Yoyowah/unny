@@ -13,6 +13,11 @@ import {
   useSupervisionRequests,
 } from "../../../hooks/useProjectWorkflow";
 import { useAuthStore } from "../../../store/auth.store";
+import { useSubmitProject } from "../../../hooks/useSubmitProject";
+import {
+  isEditableProjectStatus,
+  normalizeProjectStatus,
+} from "../../../api/services/project.service";
 
 type Navigation = NativeStackNavigationProp<MainStackParamList>;
 
@@ -35,6 +40,7 @@ export const useProjectDetails = (
 
   const currentUser = useAuthStore((state) => state.user);
   const actions = useProjectActions(projectId);
+  const submitForReview = useSubmitProject();
   const { data: reviews = [] } = useProjectReviews(projectId, !isDeleting);
   const { data: collaborators = [] } = useProjectCollaborators(
     projectId,
@@ -58,7 +64,11 @@ export const useProjectDetails = (
   const isSupervisor =
     currentUser?.role === "lecturer" || currentUser?.role === "admin";
 
-  const canEdit = isStudent && project?.submittedBy?.id === currentUser?.id;
+  const editableProjectStatus = isEditableProjectStatus(project?.status);
+  const canEdit =
+    isStudent &&
+    project?.submittedBy?.id === currentUser?.id &&
+    editableProjectStatus;
 
   const canDelete = isStudent && project?.submittedBy?.id === currentUser?.id;
 
@@ -131,6 +141,12 @@ export const useProjectDetails = (
 
   const beginEditing = () => {
     if (!project || isDeleting || !canEdit) {
+      if (project && !isEditableProjectStatus(project.status)) {
+        Alert.alert(
+          "Project locked",
+          "This project can only be edited while it is in Draft or Rejected status.",
+        );
+      }
       return;
     }
 
@@ -147,6 +163,12 @@ export const useProjectDetails = (
 
   const saveChanges = async () => {
     if (isDeleting || !canEdit) {
+      if (project && !isEditableProjectStatus(project.status)) {
+        Alert.alert(
+          "Project locked",
+          "This project cannot be edited while it is under review or already approved.",
+        );
+      }
       return;
     }
 
@@ -184,6 +206,46 @@ export const useProjectDetails = (
     } catch (error) {
       Alert.alert(
         "Comment failed",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    }
+  };
+
+  const handleSubmitForReview = async () => {
+    if (!project || !canEdit || submitForReview.isPending || isDeleting) {
+      return;
+    }
+
+    if (!project.supervisor) {
+      Alert.alert(
+        "Supervisor required",
+        "A supervisor must accept your supervision request before you can submit this project for review.",
+      );
+      return;
+    }
+
+    if (
+      normalizeProjectStatus(project.status) === "PENDING REVIEW" ||
+      normalizeProjectStatus(project.status) === "APPROVED" ||
+      normalizeProjectStatus(project.status) === "PENDING"
+    ) {
+      Alert.alert(
+        "Already submitted",
+        "This project is already in the review pipeline.",
+      );
+      return;
+    }
+
+    try {
+      await submitForReview.mutateAsync(project.id);
+      await refetch();
+      Alert.alert(
+        "Project submitted",
+        "Your project is now waiting for supervisor review.",
+      );
+    } catch (error) {
+      Alert.alert(
+        "Submission failed",
         error instanceof Error ? error.message : "Please try again.",
       );
     }
@@ -388,6 +450,7 @@ export const useProjectDetails = (
     cancelEditing,
     saveChanges,
     addComment,
+    handleSubmitForReview,
     confirmDelete,
     handleDelete,
     handleInvite,

@@ -2,11 +2,7 @@ import { apiClient } from "../client";
 import { Endpoints } from "../endpoints";
 import { Project, normalizeProject } from "./project.service";
 
-export type ReviewAction =
-  | "COMMENTED"
-  | "APPROVED"
-  | "REJECTED"
-  | "CHANGES_REQUESTED";
+export type ReviewAction = "COMMENTED" | "APPROVED" | "REJECTED";
 
 export interface ProjectReview {
   id: string;
@@ -212,16 +208,6 @@ export const SupervisionService = {
   ): Promise<ProjectReview> => {
     return SupervisionService.createReview(projectId, {
       action: "REJECTED",
-      comment,
-    });
-  },
-
-  requestChanges: async (
-    projectId: string,
-    comment: string,
-  ): Promise<ProjectReview> => {
-    return SupervisionService.createReview(projectId, {
-      action: "CHANGES_REQUESTED",
       comment,
     });
   },

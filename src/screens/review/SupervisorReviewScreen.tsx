@@ -1,8 +1,12 @@
 import React, { useMemo, useState } from "react";
 import {
   FlatList,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
+  RefreshControl,
+  ScrollView,
   StatusBar,
   StyleSheet,
   TextInput,
@@ -21,10 +25,12 @@ import {
   useApproveProject,
   useCommentOnProject,
   useRejectProject,
-  useRequestProjectChanges,
   useReviewQueue,
 } from "../../hooks/useSupervision";
-import { Project } from "@/api/services/project.service";
+import {
+  Project,
+  getProjectStatusPresentation,
+} from "@/api/services/project.service";
 import { ReviewAction } from "@/api/services/supervision.service";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
@@ -51,12 +57,6 @@ const ACTION_CONFIG: Record<
     icon: "chatbubble-ellipses-outline",
     color: Colors.primary,
   },
-  CHANGES_REQUESTED: {
-    title: "Request changes",
-    description: "Ask the student to make changes and resubmit.",
-    icon: "create-outline",
-    color: "#D97706",
-  },
   REJECTED: {
     title: "Reject project",
     description: "Reject the current submission and provide a reason.",
@@ -75,12 +75,17 @@ export const SupervisorReviewScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
 
-  const { data: projects, isLoading, isError, refetch } = useReviewQueue();
+  const {
+    data: projects,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useReviewQueue();
 
   const commentMutation = useCommentOnProject();
   const approveMutation = useApproveProject();
   const rejectMutation = useRejectProject();
-  const changesMutation = useRequestProjectChanges();
 
   const [modal, setModal] = useState<ReviewModalState>({
     visible: false,
@@ -93,8 +98,7 @@ export const SupervisorReviewScreen: React.FC = () => {
   const isSubmitting =
     commentMutation.isPending ||
     approveMutation.isPending ||
-    rejectMutation.isPending ||
-    changesMutation.isPending;
+    rejectMutation.isPending;
 
   const reviewCount = projects?.length ?? 0;
 
@@ -139,14 +143,6 @@ export const SupervisorReviewScreen: React.FC = () => {
     const projectId = modal.project.id;
     const trimmedComment = comment.trim();
 
-    if (
-      modal.action !== "COMMENTED" &&
-      modal.action !== "APPROVED" &&
-      !trimmedComment
-    ) {
-      return;
-    }
-
     if (modal.action === "COMMENTED") {
       if (!trimmedComment) {
         return;
@@ -166,14 +162,11 @@ export const SupervisorReviewScreen: React.FC = () => {
     }
 
     if (modal.action === "REJECTED") {
-      await rejectMutation.mutateAsync({
-        projectId,
-        comment: trimmedComment || undefined,
-      });
-    }
+      if (!trimmedComment) {
+        return;
+      }
 
-    if (modal.action === "CHANGES_REQUESTED") {
-      await changesMutation.mutateAsync({
+      await rejectMutation.mutateAsync({
         projectId,
         comment: trimmedComment,
       });
@@ -195,6 +188,7 @@ export const SupervisorReviewScreen: React.FC = () => {
       "Student unavailable";
 
     const progress = Math.max(0, Math.min(100, Number(item.progress ?? 0)));
+    const statusPresentation = getProjectStatusPresentation(item.status);
 
     return (
       <Card style={styles.projectCard}>
@@ -221,7 +215,7 @@ export const SupervisorReviewScreen: React.FC = () => {
                 weight="semibold"
                 numberOfLines={1}
               >
-                {item.status || "Pending review"}
+                {statusPresentation.label}
               </AppText>
             </View>
 
@@ -353,17 +347,17 @@ export const SupervisorReviewScreen: React.FC = () => {
 
           <TouchableOpacity
             activeOpacity={0.8}
-            style={[styles.actionButton, styles.changeButton]}
-            onPress={() => openReview(item, "CHANGES_REQUESTED")}
+            style={[styles.actionButton, styles.rejectButton]}
+            onPress={() => openReview(item, "REJECTED")}
           >
-            <Ionicons name="create-outline" size={17} color="#D97706" />
+            <Ionicons name="close-circle-outline" size={17} color="#DC2626" />
 
             <AppText
               variant="caption"
               weight="semibold"
-              style={[styles.actionText, { color: "#D97706" }]}
+              style={[styles.actionText, { color: "#DC2626" }]}
             >
-              Changes
+              Reject
             </AppText>
           </TouchableOpacity>
 
@@ -423,10 +417,26 @@ export const SupervisorReviewScreen: React.FC = () => {
             </AppText>
           </View>
 
-          <View style={styles.countCard}>
-            <AppText style={styles.countNumber}>{reviewCount}</AppText>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.refreshButton}
+              onPress={() => refetch()}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh review queue"
+            >
+              <Ionicons
+                name={isFetching ? "sync-outline" : "refresh-outline"}
+                size={19}
+                color={Colors.text.inverse}
+              />
+            </TouchableOpacity>
 
-            <AppText style={styles.countLabel}>Pending</AppText>
+            <View style={styles.countCard}>
+              <AppText style={styles.countNumber}>{reviewCount}</AppText>
+
+              <AppText style={styles.countLabel}>Pending</AppText>
+            </View>
           </View>
         </View>
       </View>
@@ -458,6 +468,14 @@ export const SupervisorReviewScreen: React.FC = () => {
             keyExtractor={(item) => item.id}
             renderItem={renderProject}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isFetching}
+                onRefresh={() => refetch()}
+                tintColor={Colors.primary}
+                colors={[Colors.primary]}
+              />
+            }
             contentContainerStyle={[
               styles.list,
               {
@@ -505,149 +523,168 @@ export const SupervisorReviewScreen: React.FC = () => {
         animationType="slide"
         onRequestClose={closeReview}
       >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalCard,
-              {
-                paddingBottom: insets.bottom + Spacing[5],
-              },
-            ]}
-          >
-            <View style={styles.modalHandle} />
-
-            <View style={styles.modalHeader}>
-              <View
-                style={[
-                  styles.modalIcon,
-                  {
-                    backgroundColor: `${ACTION_CONFIG[modal.action].color}15`,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={ACTION_CONFIG[modal.action].icon}
-                  size={22}
-                  color={ACTION_CONFIG[modal.action].color}
-                />
-              </View>
-
-              <View style={styles.modalTitleContainer}>
-                <AppText variant="h5" weight="bold">
-                  {ACTION_CONFIG[modal.action].title}
-                </AppText>
-
-                <AppText variant="caption" color="secondary" numberOfLines={2}>
-                  {modal.project?.title}
-                </AppText>
-              </View>
-
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={closeReview}
-                disabled={isSubmitting}
-                style={styles.closeButton}
-              >
-                <Ionicons
-                  name="close"
-                  size={21}
-                  color={Colors.text.secondary}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <AppText
-              variant="body2"
-              color="secondary"
-              style={styles.modalDescription}
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        >
+          <View style={styles.modalSheetWrapper}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.modalScrollContent,
+                { paddingBottom: insets.bottom + Spacing[5] },
+              ]}
             >
-              {ACTION_CONFIG[modal.action].description}
-            </AppText>
+              <View style={styles.modalCard}>
+                <View style={styles.modalHandle} />
 
-            <View style={styles.inputContainer}>
-              <AppText
-                variant="caption"
-                weight="semibold"
-                color="secondary"
-                style={styles.inputLabel}
-              >
-                Feedback
-              </AppText>
-
-              <TextInput
-                value={comment}
-                onChangeText={setComment}
-                multiline
-                textAlignVertical="top"
-                placeholder={
-                  modal.action === "APPROVED"
-                    ? "Add an optional message..."
-                    : "Write your feedback..."
-                }
-                placeholderTextColor={Colors.text.tertiary}
-                style={styles.input}
-                editable={!isSubmitting}
-              />
-            </View>
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={closeReview}
-                disabled={isSubmitting}
-                style={styles.cancelButton}
-              >
-                <AppText variant="caption" weight="semibold" color="secondary">
-                  Cancel
-                </AppText>
-              </Pressable>
-
-              <Pressable
-                onPress={submitReview}
-                disabled={
-                  isSubmitting ||
-                  (modal.action !== "APPROVED" && !comment.trim())
-                }
-                style={[
-                  styles.submitButton,
-                  {
-                    backgroundColor: ACTION_CONFIG[modal.action].color,
-                  },
-                  (isSubmitting ||
-                    (modal.action !== "APPROVED" && !comment.trim())) &&
-                    styles.submitButtonDisabled,
-                ]}
-              >
-                {isSubmitting ? (
-                  <AppText variant="caption" color="inverse" weight="semibold">
-                    Saving...
-                  </AppText>
-                ) : (
-                  <>
+                <View style={styles.modalHeader}>
+                  <View
+                    style={[
+                      styles.modalIcon,
+                      {
+                        backgroundColor: `${ACTION_CONFIG[modal.action].color}15`,
+                      },
+                    ]}
+                  >
                     <Ionicons
                       name={ACTION_CONFIG[modal.action].icon}
-                      size={17}
-                      color={Colors.text.inverse}
+                      size={22}
+                      color={ACTION_CONFIG[modal.action].color}
                     />
+                  </View>
+
+                  <View style={styles.modalTitleContainer}>
+                    <AppText variant="h5" weight="bold">
+                      {ACTION_CONFIG[modal.action].title}
+                    </AppText>
 
                     <AppText
                       variant="caption"
-                      color="inverse"
-                      weight="semibold"
+                      color="secondary"
+                      numberOfLines={2}
                     >
-                      {modal.action === "COMMENTED"
-                        ? "Send comment"
-                        : modal.action === "CHANGES_REQUESTED"
-                          ? "Request changes"
-                          : modal.action === "REJECTED"
-                            ? "Reject"
-                            : "Approve"}
+                      {modal.project?.title}
                     </AppText>
-                  </>
-                )}
-              </Pressable>
-            </View>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={closeReview}
+                    disabled={isSubmitting}
+                    style={styles.closeButton}
+                  >
+                    <Ionicons
+                      name="close"
+                      size={21}
+                      color={Colors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <AppText
+                  variant="body2"
+                  color="secondary"
+                  style={styles.modalDescription}
+                >
+                  {ACTION_CONFIG[modal.action].description}
+                </AppText>
+
+                <View style={styles.inputContainer}>
+                  <AppText
+                    variant="caption"
+                    weight="semibold"
+                    color="secondary"
+                    style={styles.inputLabel}
+                  >
+                    Feedback
+                  </AppText>
+
+                  <TextInput
+                    value={comment}
+                    onChangeText={setComment}
+                    multiline
+                    textAlignVertical="top"
+                    placeholder={
+                      modal.action === "APPROVED"
+                        ? "Add an optional message..."
+                        : "Write your feedback..."
+                    }
+                    placeholderTextColor={Colors.text.tertiary}
+                    style={styles.input}
+                    editable={!isSubmitting}
+                    autoFocus
+                  />
+                </View>
+
+                <View style={styles.modalActions}>
+                  <Pressable
+                    onPress={closeReview}
+                    disabled={isSubmitting}
+                    style={styles.cancelButton}
+                  >
+                    <AppText
+                      variant="caption"
+                      weight="semibold"
+                      color="secondary"
+                    >
+                      Cancel
+                    </AppText>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={submitReview}
+                    disabled={
+                      isSubmitting ||
+                      (modal.action !== "APPROVED" && !comment.trim())
+                    }
+                    style={[
+                      styles.submitButton,
+                      {
+                        backgroundColor: ACTION_CONFIG[modal.action].color,
+                      },
+                      (isSubmitting ||
+                        (modal.action !== "APPROVED" && !comment.trim())) &&
+                        styles.submitButtonDisabled,
+                    ]}
+                  >
+                    {isSubmitting ? (
+                      <AppText
+                        variant="caption"
+                        color="inverse"
+                        weight="semibold"
+                      >
+                        Saving...
+                      </AppText>
+                    ) : (
+                      <>
+                        <Ionicons
+                          name={ACTION_CONFIG[modal.action].icon}
+                          size={17}
+                          color={Colors.text.inverse}
+                        />
+
+                        <AppText
+                          variant="caption"
+                          color="inverse"
+                          weight="semibold"
+                        >
+                          {modal.action === "COMMENTED"
+                            ? "Send comment"
+                            : modal.action === "REJECTED"
+                              ? "Reject"
+                              : "Approve"}
+                        </AppText>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -662,13 +699,20 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing[5],
-    paddingBottom: Spacing[6],
+    paddingBottom: Spacing[8],
   },
 
   headerTop: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: Spacing[4],
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+    flexShrink: 0,
   },
 
   headerCopy: {
@@ -698,6 +742,15 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
 
+  refreshButton: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   countCard: {
     minWidth: 72,
     alignItems: "center",
@@ -723,6 +776,11 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
+    backgroundColor: Colors.background,
+    marginTop: -Spacing[7],
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    overflow: "hidden",
   },
 
   list: {
@@ -739,17 +797,6 @@ const styles = StyleSheet.create({
 
   listSubtitle: {
     marginTop: 3,
-  },
-
-  refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.border.light,
   },
 
   projectCard: {
@@ -872,8 +919,8 @@ const styles = StyleSheet.create({
     borderRightColor: Colors.border.light,
   },
 
-  changeButton: {
-    backgroundColor: "#D9770608",
+  rejectButton: {
+    backgroundColor: "#DC262608",
   },
 
   approveButton: {
@@ -907,11 +954,22 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(15, 23, 42, 0.45)",
   },
 
+  modalSheetWrapper: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: "flex-end",
+  },
+
   modalCard: {
     backgroundColor: Colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: Spacing[3],
+    paddingBottom: Spacing[6],
     paddingHorizontal: Spacing[5],
   },
 

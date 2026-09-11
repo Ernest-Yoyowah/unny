@@ -65,7 +65,7 @@ export default function App() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <NavigationContainer>
-            <StatusBar style="dark" hidden={false} translucent={false} />
+            <StatusBar style="dark" hidden={false} />
             <RootNavigator />
           </NavigationContainer>
         </QueryClientProvider>

@@ -1,5 +1,11 @@
 import React from "react";
-import { ScrollView, StatusBar, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StatusBar,
+  TouchableOpacity,
+  View,
+  RefreshControl,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -50,9 +56,15 @@ export const LecturerDashboardScreen: React.FC = () => {
     data: requestData = [],
     isLoading: isRequestsLoading,
     isError,
+    refetch: refetchRequests,
+    isFetching: isRequestsFetching,
   } = useSupervisionRequests();
 
-  const { data: notificationPage } = useNotifications();
+  const {
+    data: notificationPage,
+    refetch: refetchNotifications,
+    isFetching: isNotificationsFetching,
+  } = useNotifications();
 
   const requests = requestData as SupervisionRequest[];
 
@@ -92,6 +104,10 @@ export const LecturerDashboardScreen: React.FC = () => {
 
   const totalProjects = supervisedProjects.length;
 
+  const handleRefresh = async () => {
+    await Promise.all([refetchRequests(), refetchNotifications()]);
+  };
+
   const renderHeader = () => (
     <>
       <StatusBar
@@ -129,6 +145,24 @@ export const LecturerDashboardScreen: React.FC = () => {
         </View>
 
         <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.notifBtn}
+            onPress={handleRefresh}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh dashboard"
+          >
+            <Ionicons
+              name={
+                isRequestsFetching || isNotificationsFetching
+                  ? "sync-outline"
+                  : "refresh-outline"
+              }
+              size={20}
+              color={Colors.text.inverse}
+            />
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.notifBtn}
             onPress={() => navigation.navigate("Notifications")}
@@ -520,20 +554,18 @@ export const LecturerDashboardScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => {
-            if (supervisedProjects[0]) {
-              navigation.navigate("ProjectDetails", {
-                projectId: supervisedProjects[0].id,
-              });
-            }
-          }}
+          onPress={() =>
+            navigation.navigate("LecturerTabs", {
+              screen: "SupervisorReview",
+            })
+          }
           activeOpacity={0.75}
           accessibilityRole="button"
-          accessibilityLabel="Open project workspace"
+          accessibilityLabel="Open project review queue"
         >
           <View style={[styles.actionIcon, styles.actionIconAccent]}>
             <Ionicons
-              name="document-text-outline"
+              name="checkmark-done-outline"
               size={20}
               color={Colors.accent}
             />
@@ -541,11 +573,11 @@ export const LecturerDashboardScreen: React.FC = () => {
 
           <View style={styles.actionText}>
             <AppText variant="body2" weight="semibold">
-              Project work
+              Review queue
             </AppText>
 
             <AppText variant="caption" color="secondary">
-              Review student work
+              Comment, approve, reject, or request changes
             </AppText>
           </View>
 

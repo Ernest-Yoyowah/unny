@@ -824,6 +824,61 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing[4],
   },
 
+  selectedUploadRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing[3],
+    padding: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primaryDim,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+
+  selectedUploadInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+    flex: 1,
+    minWidth: 0,
+  },
+
+  selectedUploadTextBlock: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
+  selectedUploadActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+    flexShrink: 0,
+  },
+
+  confirmUploadButton: {
+    minHeight: 36,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing[1],
+    paddingHorizontal: Spacing[2],
+  },
+
+  cancelUploadButton: {
+    minHeight: 36,
+    paddingHorizontal: Spacing[2],
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   secondaryActionButton: {
     minHeight: 52,
     borderRadius: BorderRadius.lg,

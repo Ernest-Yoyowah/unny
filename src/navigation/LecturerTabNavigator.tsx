@@ -27,10 +27,10 @@ const TAB_CONFIG: {
     activeIcon: "grid",
   },
   {
-    name: "LecturerProjects",
-    label: "Projects",
-    icon: "folder-outline",
-    activeIcon: "folder",
+    name: "SupervisorReview",
+    label: "Review",
+    icon: "checkmark-done-outline",
+    activeIcon: "checkmark-done",
   },
   {
     name: "Search",

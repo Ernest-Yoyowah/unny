@@ -50,10 +50,26 @@ export const styles = StyleSheet.create({
     maxWidth: 300,
   },
 
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+    flexShrink: 0,
+  },
+
+  refreshButton: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   headerIcon: {
     width: 48,
     height: 48,
-    marginLeft: Spacing[3],
+    marginLeft: Spacing[1],
     marginTop: Spacing[1],
     borderRadius: BorderRadius.lg,
     backgroundColor: "rgba(255,255,255,0.12)",
@@ -78,14 +94,14 @@ export const styles = StyleSheet.create({
   },
 
   searchBar: {
-    minHeight: 56,
+    minHeight: 60,
     paddingHorizontal: Spacing[2],
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: Colors.border.default,
+    borderColor: Colors.border.light,
     ...Shadows.sm,
   },
 
@@ -118,8 +134,9 @@ export const styles = StyleSheet.create({
   },
 
   peopleSection: {
-    marginTop: Spacing[6],
+    marginTop: Spacing[7],
     marginBottom: Spacing[7],
+    paddingTop: Spacing[1],
   },
 
   sectionHeader: {
@@ -153,6 +170,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border.light,
     overflow: "hidden",
+    ...Shadows.sm,
   },
 
   personRow: {
@@ -244,6 +262,27 @@ export const styles = StyleSheet.create({
     flexShrink: 0,
   },
 
+  summaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[3],
+    marginTop: Spacing[4],
+    marginBottom: Spacing[4],
+  },
+
+  summaryCard: {
+    flex: 1,
+    minHeight: 74,
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[2],
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    justifyContent: "center",
+    ...Shadows.sm,
+  },
+
   resultsHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -263,7 +302,9 @@ export const styles = StyleSheet.create({
     height: 30,
     paddingHorizontal: Spacing[2],
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryDim,
+    backgroundColor: Colors.status.successLight,
+    borderWidth: 1,
+    borderColor: Colors.status.success,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -280,7 +321,7 @@ export const styles = StyleSheet.create({
   },
 
   errorOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: Colors.background,
     paddingHorizontal: Spacing[5],
     paddingTop: Spacing[8],

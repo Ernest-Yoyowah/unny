@@ -1,5 +1,11 @@
 import React from "react";
-import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  TouchableOpacity,
+  View,
+  RefreshControl,
+} from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,6 +29,7 @@ export const SupervisionRequestsScreen: React.FC<Props> = ({ navigation }) => {
     isLoading,
     isError,
     refetch,
+    isFetching,
   } = useSupervisionRequests();
 
   const respond = useRespondToSupervision();
@@ -118,14 +125,30 @@ export const SupervisionRequestsScreen: React.FC<Props> = ({ navigation }) => {
               </AppText>
             </View>
 
-            <View style={styles.headerCount}>
-              <AppText style={styles.headerCountNumber}>
-                {requests.length}
-              </AppText>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.refreshButton}
+                onPress={() => refetch()}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Refresh supervision requests"
+              >
+                <Ionicons
+                  name={isFetching ? "sync-outline" : "refresh-outline"}
+                  size={18}
+                  color={Colors.text.inverse}
+                />
+              </TouchableOpacity>
 
-              <AppText style={styles.headerCountLabel}>
-                {requests.length === 1 ? "request" : "requests"}
-              </AppText>
+              <View style={styles.headerCount}>
+                <AppText style={styles.headerCountNumber}>
+                  {requests.length}
+                </AppText>
+
+                <AppText style={styles.headerCountLabel}>
+                  {requests.length === 1 ? "request" : "requests"}
+                </AppText>
+              </View>
             </View>
           </View>
         </View>
@@ -135,6 +158,14 @@ export const SupervisionRequestsScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.scrollView}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isFetching}
+                onRefresh={() => refetch()}
+                tintColor={Colors.primary}
+                colors={[Colors.primary]}
+              />
+            }
           >
             {isSupervisor ? (
               <SupervisorView requests={requests} respond={respond} />

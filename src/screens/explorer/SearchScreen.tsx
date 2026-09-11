@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,7 +29,7 @@ export const SearchScreen: React.FC = () => {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  const { data, isLoading, isError, error, refetch } =
+  const { data, isLoading, isError, error, refetch, isFetching } =
     useExplore(debouncedQuery);
 
   const projects = Array.isArray(data?.projects) ? data.projects : [];
@@ -119,14 +120,6 @@ export const SearchScreen: React.FC = () => {
             {secondary}
           </AppText>
         </View>
-
-        <View style={styles.personChevron}>
-          <Ionicons
-            name="chevron-forward"
-            size={16}
-            color={Colors.text.tertiary}
-          />
-        </View>
       </TouchableOpacity>
     );
   };
@@ -159,7 +152,7 @@ export const SearchScreen: React.FC = () => {
       } found`
     : `${projects.length} ${
         projects.length === 1 ? "project" : "projects"
-      } available`;
+      } approved`;
 
   return (
     <View style={styles.outerContainer}>
@@ -185,16 +178,32 @@ export const SearchScreen: React.FC = () => {
           </AppText>
 
           <AppText style={styles.headerSubtitle} numberOfLines={2}>
-            Discover projects, students and supervisors across the university.
+            Browse approved student work across the university.
           </AppText>
         </View>
 
-        <View style={styles.headerIcon}>
-          <Ionicons
-            name="compass-outline"
-            size={24}
-            color={Colors.text.inverse}
-          />
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={() => refetch()}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh explore results"
+          >
+            <Ionicons
+              name={isFetching ? "sync-outline" : "refresh-outline"}
+              size={20}
+              color={Colors.text.inverse}
+            />
+          </TouchableOpacity>
+
+          <View style={styles.headerIcon}>
+            <Ionicons
+              name="compass-outline"
+              size={24}
+              color={Colors.text.inverse}
+            />
+          </View>
         </View>
       </View>
 
@@ -205,6 +214,14 @@ export const SearchScreen: React.FC = () => {
           renderItem={renderProject}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading || isFetching}
+              onRefresh={() => refetch()}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
+            />
+          }
           ItemSeparatorComponent={() => (
             <View style={styles.projectSeparator} />
           )}
@@ -221,7 +238,7 @@ export const SearchScreen: React.FC = () => {
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Search projects, people..."
+                  placeholder="Search approved projects or people"
                   placeholderTextColor={Colors.text.tertiary}
                   value={query}
                   onChangeText={setQuery}
@@ -247,48 +264,30 @@ export const SearchScreen: React.FC = () => {
                 )}
               </View>
 
-              {users.length > 0 && (
-                <View style={styles.peopleSection}>
-                  <View style={styles.sectionHeader}>
-                    <View style={styles.sectionTitleWrap}>
-                      <AppText variant="h5" weight="semibold">
-                        People
-                      </AppText>
-
-                      <AppText variant="caption" color="secondary">
-                        Students and supervisors
-                      </AppText>
-                    </View>
-
-                    <View style={styles.sectionCount}>
-                      <AppText
-                        variant="caption"
-                        weight="semibold"
-                        color="accent"
-                      >
-                        {users.length}
-                      </AppText>
-                    </View>
-                  </View>
-
-                  <View style={styles.peopleList}>
-                    <FlatList
-                      data={users}
-                      keyExtractor={(item) => item.id}
-                      renderItem={renderPerson}
-                      scrollEnabled={false}
-                      ItemSeparatorComponent={() => (
-                        <View style={styles.personSeparator} />
-                      )}
-                    />
-                  </View>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCard}>
+                  <AppText variant="caption" color="secondary">
+                    Approved
+                  </AppText>
+                  <AppText variant="h5" weight="bold">
+                    {projects.length}
+                  </AppText>
                 </View>
-              )}
+
+                <View style={styles.summaryCard}>
+                  <AppText variant="caption" color="secondary">
+                    People
+                  </AppText>
+                  <AppText variant="h5" weight="bold">
+                    {users.length}
+                  </AppText>
+                </View>
+              </View>
 
               <View style={styles.resultsHeader}>
                 <View style={styles.resultsTitle}>
                   <AppText variant="h5" weight="semibold">
-                    {hasQuery ? "Projects" : "Explore projects"}
+                    {hasQuery ? "Projects" : "Approved projects"}
                   </AppText>
 
                   <AppText variant="caption" color="secondary">
@@ -302,7 +301,11 @@ export const SearchScreen: React.FC = () => {
 
                 {!showInitialLoading && !showError && (
                   <View style={styles.resultsCount}>
-                    <AppText variant="caption" weight="semibold" color="accent">
+                    <AppText
+                      variant="caption"
+                      weight="semibold"
+                      color="success"
+                    >
                       {projects.length}
                     </AppText>
                   </View>
@@ -331,6 +334,41 @@ export const SearchScreen: React.FC = () => {
                 </View>
               )}
             </View>
+          }
+          ListFooterComponent={
+            users.length > 0 ? (
+              <View style={styles.peopleSection}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionTitleWrap}>
+                    <AppText variant="h5" weight="semibold">
+                      People
+                    </AppText>
+
+                    <AppText variant="caption" color="secondary">
+                      Students and supervisors
+                    </AppText>
+                  </View>
+
+                  <View style={styles.sectionCount}>
+                    <AppText variant="caption" weight="semibold" color="accent">
+                      {users.length}
+                    </AppText>
+                  </View>
+                </View>
+
+                <View style={styles.peopleList}>
+                  <FlatList
+                    data={users}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderPerson}
+                    scrollEnabled={false}
+                    ItemSeparatorComponent={() => (
+                      <View style={styles.personSeparator} />
+                    )}
+                  />
+                </View>
+              </View>
+            ) : null
           }
           ListEmptyComponent={
             !showInitialLoading ? (

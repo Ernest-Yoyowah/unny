@@ -1,5 +1,11 @@
 import React from "react";
-import { View, TouchableOpacity, SectionList, StatusBar } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  SectionList,
+  StatusBar,
+  RefreshControl,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -132,7 +138,7 @@ const groupNotificationsByDate = (notifications: Notification[]) => {
 export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const { data, isLoading } = useNotifications();
+  const { data, isLoading, isFetching, refetch } = useNotifications();
   const markRead = useMarkNotificationRead();
 
   const notifications = data?.data ?? [];
@@ -200,6 +206,14 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading || isFetching}
+            onRefresh={() => refetch()}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
         contentContainerStyle={[
           styles.list,
           sections.length === 0 && styles.emptyList,

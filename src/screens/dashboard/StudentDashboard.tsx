@@ -1,5 +1,11 @@
 import React from "react";
-import { View, ScrollView, TouchableOpacity, StatusBar } from "react-native";
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  RefreshControl,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -17,8 +23,8 @@ import { useMyProjects } from "../../hooks/useProject";
 import { useNotifications } from "../../hooks/useNotifications";
 import { Colors, Spacing } from "../../theme";
 import { MainStackParamList } from "../../navigation/types";
+import { getProjectStatusPresentation } from "../../api/services/project.service";
 import { styles } from "./styles/StudentDashboardScreen.styles";
-import { getProjectProgress } from "../../utils/project-progress";
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
@@ -27,8 +33,17 @@ export const StudentDashboardScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
 
   const user = useAuthStore((state) => state.user);
-  const { data: projects, isLoading: isProjectsLoading } = useMyProjects();
-  const { data: notificationPage } = useNotifications();
+  const {
+    data: projects,
+    isLoading: isProjectsLoading,
+    isFetching: isProjectsFetching,
+    refetch: refetchProjects,
+  } = useMyProjects();
+  const {
+    data: notificationPage,
+    refetch: refetchNotifications,
+    isFetching: isNotificationsFetching,
+  } = useNotifications();
 
   const project = projects?.[0];
 
@@ -56,6 +71,9 @@ export const StudentDashboardScreen: React.FC = () => {
   const firstName = user.fullName?.trim().split(/\s+/)[0] || "Student";
 
   const documents = project?.documents ?? [];
+  const handleRefresh = async () => {
+    await Promise.all([refetchProjects(), refetchNotifications()]);
+  };
 
   const openDocuments = () => {
     const firstDocument = documents[0];
@@ -116,6 +134,24 @@ export const StudentDashboardScreen: React.FC = () => {
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.notifBtn}
+            onPress={() => handleRefresh()}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh dashboard"
+          >
+            <Ionicons
+              name={
+                isProjectsFetching || isNotificationsFetching
+                  ? "sync-outline"
+                  : "refresh-outline"
+              }
+              size={20}
+              color={Colors.text.inverse}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.notifBtn}
             onPress={() => navigation.navigate("Notifications")}
             activeOpacity={0.75}
             accessibilityRole="button"
@@ -153,23 +189,23 @@ export const StudentDashboardScreen: React.FC = () => {
           />
         </View>
 
-        <AppText style={styles.emptyStatNumber}>0</AppText>
+        <AppText style={styles.emptyStatNumber}>—</AppText>
 
-        <AppText style={styles.emptyStatLabel}>Projects</AppText>
+        <AppText style={styles.emptyStatLabel}>Status</AppText>
       </View>
 
       <View style={styles.emptyStatCard}>
         <View style={styles.emptyStatIcon}>
           <Ionicons
-            name="document-text-outline"
+            name="notifications-outline"
             size={19}
             color={Colors.text.tertiary}
           />
         </View>
 
-        <AppText style={styles.emptyStatNumber}>0</AppText>
+        <AppText style={styles.emptyStatNumber}>{unreadCount}</AppText>
 
-        <AppText style={styles.emptyStatLabel}>Documents</AppText>
+        <AppText style={styles.emptyStatLabel}>Unread</AppText>
       </View>
 
       <View style={styles.emptyStatCard}>
@@ -327,6 +363,11 @@ export const StudentDashboardScreen: React.FC = () => {
       return renderEmptyStats();
     }
 
+    const statusPresentation = getProjectStatusPresentation(project.status);
+    const progressValue = Math.max(0, Math.min(100, project.progress ?? 0));
+    const progressColor =
+      progressValue >= 100 ? Colors.status.success : Colors.primary;
+
     return (
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
@@ -338,23 +379,24 @@ export const StudentDashboardScreen: React.FC = () => {
             />
           </View>
 
-          <AppText style={styles.statNum}>{project ? 1 : 0}</AppText>
-
-          <AppText style={styles.statLbl}>Project</AppText>
-        </View>
-
-        <View style={styles.statCard}>
-          <View style={[styles.statIcon, styles.statIconAccent]}>
-            <Ionicons
-              name="document-text-outline"
-              size={17}
-              color={Colors.accent}
-            />
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: statusPresentation.badgeBackground },
+            ]}
+          >
+            <AppText
+              style={[
+                styles.statusBadgeText,
+                { color: statusPresentation.textColor },
+              ]}
+              numberOfLines={1}
+            >
+              {statusPresentation.label}
+            </AppText>
           </View>
 
-          <AppText style={styles.statNum}>{documents.length}</AppText>
-
-          <AppText style={styles.statLbl}>Documents</AppText>
+          <AppText style={styles.statLbl}>Status</AppText>
         </View>
 
         <View style={styles.statCard}>
@@ -370,6 +412,22 @@ export const StudentDashboardScreen: React.FC = () => {
 
           <AppText style={styles.statLbl}>Unread</AppText>
         </View>
+
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, styles.statIconSuccess]}>
+            <Ionicons
+              name="checkmark-circle-outline"
+              size={17}
+              color={Colors.status.success}
+            />
+          </View>
+
+          <AppText style={[styles.statNum, { color: progressColor }]}>
+            {progressValue}%
+          </AppText>
+
+          <AppText style={styles.statLbl}>Progress</AppText>
+        </View>
       </View>
     );
   };
@@ -379,7 +437,25 @@ export const StudentDashboardScreen: React.FC = () => {
       return renderEmptyProject();
     }
 
-    const progress = getProjectProgress(project);
+    const statusPresentation = getProjectStatusPresentation(project.status);
+    const statusMeta = {
+      label: statusPresentation.label,
+      icon:
+        statusPresentation.label === "Approved"
+          ? "checkmark-circle-outline"
+          : statusPresentation.label === "Rejected"
+            ? "close-circle-outline"
+            : statusPresentation.label === "Changes Requested"
+              ? "create-outline"
+              : statusPresentation.label === "Pending Review"
+                ? "time-outline"
+                : statusPresentation.label === "Draft"
+                  ? "pencil-outline"
+                  : "folder-open-outline",
+      color: statusPresentation.textColor,
+      background: statusPresentation.badgeBackground,
+      dot: statusPresentation.dotColor,
+    };
 
     const supervisorName =
       project.supervisor?.fullName ??
@@ -448,16 +524,37 @@ export const StudentDashboardScreen: React.FC = () => {
                 </View>
               </View>
 
-              <View style={styles.projectStatus}>
-                <View style={styles.statusDot} />
+              <View
+                style={[
+                  styles.projectStatus,
+                  {
+                    backgroundColor: statusMeta.background,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.statusDot,
+                    {
+                      backgroundColor: statusMeta.dot,
+                    },
+                  ]}
+                />
+
+                <Ionicons
+                  name={statusMeta.icon as keyof typeof Ionicons.glyphMap}
+                  size={12}
+                  color={statusMeta.color}
+                />
 
                 <AppText
                   variant="caption"
                   color="accent"
                   weight="semibold"
                   numberOfLines={1}
+                  style={{ color: statusMeta.color }}
                 >
-                  {project.status || "In progress"}
+                  {statusMeta.label}
                 </AppText>
               </View>
             </View>
@@ -497,45 +594,6 @@ export const StudentDashboardScreen: React.FC = () => {
                   {documents.length}{" "}
                   {documents.length === 1 ? "document" : "documents"}
                 </AppText>
-              </View>
-            </View>
-
-            <View style={styles.progressArea}>
-              <View style={styles.progressHeader}>
-                <View>
-                  <AppText variant="caption" color="secondary" weight="medium">
-                    Project completion
-                  </AppText>
-
-                  <AppText
-                    variant="body2"
-                    weight="semibold"
-                    style={styles.progressMessage}
-                  >
-                    {progress >= 80
-                      ? "You're almost there"
-                      : progress >= 50
-                        ? "Great progress"
-                        : "Keep building momentum"}
-                  </AppText>
-                </View>
-
-                <View style={styles.progressPercentage}>
-                  <AppText style={styles.progressPercentageText} weight="bold">
-                    {progress}%
-                  </AppText>
-                </View>
-              </View>
-
-              <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${progress}%`,
-                    },
-                  ]}
-                />
               </View>
             </View>
 
@@ -603,38 +661,6 @@ export const StudentDashboardScreen: React.FC = () => {
 
                 <AppText variant="caption" color="secondary">
                   {documents.length} available
-                </AppText>
-              </View>
-
-              <Ionicons
-                name="arrow-forward"
-                size={16}
-                color={Colors.text.tertiary}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={() =>
-                navigation.navigate("ProjectTimeline", {
-                  projectId: project.id,
-                })
-              }
-              activeOpacity={0.75}
-              accessibilityRole="button"
-              accessibilityLabel="Open project timeline"
-            >
-              <View style={[styles.actionIcon, styles.actionIconAccent]}>
-                <Ionicons name="time-outline" size={20} color={Colors.accent} />
-              </View>
-
-              <View style={styles.actionText}>
-                <AppText variant="body2" weight="semibold">
-                  Timeline
-                </AppText>
-
-                <AppText variant="caption" color="secondary">
-                  Track milestones
                 </AppText>
               </View>
 
@@ -824,6 +850,14 @@ export const StudentDashboardScreen: React.FC = () => {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
+        refreshControl={
+          <RefreshControl
+            refreshing={isProjectsFetching || isNotificationsFetching}
+            onRefresh={handleRefresh}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
       >
         {renderStats()}
         {renderProjectDashboard()}

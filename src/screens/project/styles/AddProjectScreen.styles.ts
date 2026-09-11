@@ -139,6 +139,19 @@ export const styles = StyleSheet.create({
     gap: Spacing[3],
   },
 
+  selectFieldSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+
+  selectSelectedText: {
+    color: Colors.text.inverse,
+  },
+
+  selectSelectedSecondaryText: {
+    color: "rgba(255,255,255,0.7)",
+  },
+
   selectIcon: {
     width: 36,
     height: 36,

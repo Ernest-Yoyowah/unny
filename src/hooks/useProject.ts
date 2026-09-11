@@ -8,6 +8,7 @@ export const useProject = (projectId: string, enabled = true) =>
     queryKey: [...PROJECTS_KEY, "detail", projectId],
     queryFn: () => ProjectService.get(projectId),
     enabled: Boolean(projectId) && enabled,
+    staleTime: 30000,
   });
 
 export const useExploreProjects = (

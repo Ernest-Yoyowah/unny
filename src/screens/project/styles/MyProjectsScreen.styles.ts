@@ -76,7 +76,19 @@ export const styles = StyleSheet.create({
 
   headerRight: {
     marginLeft: Spacing[2],
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
     flexShrink: 0,
+  },
+
+  refreshButton: {
+    width: 38,
+    height: 38,
+    borderRadius: BorderRadius.full,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   headerCount: {
