@@ -48,8 +48,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "unny-project-id"
+        "projectId": "94ea23cd-6d96-40b2-aec6-57ed708695ce"
       }
-    }
+    },
+    "owner": "ernest-yoyowah-new"
   }
 }
