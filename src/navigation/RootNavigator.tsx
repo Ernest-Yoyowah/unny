@@ -12,7 +12,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export const RootNavigator: React.FC = () => {
   const { isAuthenticated, isInitializing } = useAuthStore();
 
-  if (isInitializing) return null;
+  const initialRouteName = isInitializing
+    ? "Splash"
+    : isAuthenticated
+      ? "Main"
+      : "Splash";
 
   return (
     <Stack.Navigator
@@ -20,7 +24,7 @@ export const RootNavigator: React.FC = () => {
         headerShown: false,
         animation: "fade",
       }}
-      initialRouteName="Splash"
+      initialRouteName={initialRouteName}
     >
       {isAuthenticated ? (
         <Stack.Screen name="Main" component={MainNavigator} />

@@ -18,6 +18,7 @@ import {
 
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { useAuthStore } from "./src/store/auth.store";
+import { Colors } from "./src/theme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -52,13 +53,9 @@ export default function App() {
 
   useEffect(() => {
     if (fontsLoaded && !isInitializing) {
-      SplashScreen.hideAsync();
+      void SplashScreen.hideAsync();
     }
   }, [fontsLoaded, isInitializing]);
-
-  if (!fontsLoaded || isInitializing) {
-    return null;
-  }
 
   return (
     <GestureHandlerRootView style={styles.root}>
@@ -77,5 +74,6 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
 });
