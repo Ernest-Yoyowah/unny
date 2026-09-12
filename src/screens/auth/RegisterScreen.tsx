@@ -25,17 +25,35 @@ import { extractApiError } from "../../api/client";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
+const DEPARTMENT_OPTIONS = [
+  "Engineering",
+  "Computer Science",
+  "Information Technology",
+] as const;
+
+const LEVEL_OPTIONS = ["400"] as const;
+
 const schema = z
   .object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
 
     email: z.string().email("Enter a valid institutional email address"),
 
-    department: z.string().min(2, "Enter your department"),
+    department: z
+      .string()
+      .min(1, "Select your department")
+      .refine((value) => DEPARTMENT_OPTIONS.includes(value as any), {
+        message: "Choose a valid department",
+      }),
 
     matricNumber: z.string().optional(),
 
-    level: z.string().optional(),
+    level: z
+      .string()
+      .min(1, "Select your level")
+      .refine((value) => LEVEL_OPTIONS.includes(value as any), {
+        message: "Only final-year level 400 is allowed",
+      }),
 
     role: z.enum(["student", "lecturer"]),
 
@@ -53,6 +71,101 @@ const schema = z
   });
 
 type FormValues = z.infer<typeof schema>;
+
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  placeholder: string;
+  options: { label: string; value: string }[];
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  error?: string;
+  required?: boolean;
+}
+
+const SelectField: React.FC<SelectFieldProps> = ({
+  label,
+  value,
+  placeholder,
+  options,
+  onChange,
+  onBlur,
+  error,
+  required,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <View style={styles.selectContainer}>
+      <View style={styles.labelRow}>
+        <AppText variant="label" weight="medium" color="primary">
+          {label}
+        </AppText>
+        {required && (
+          <AppText variant="label" color="error" style={styles.required}>
+            *
+          </AppText>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.selectField, error && styles.selectFieldError]}
+        onPress={() => {
+          setIsOpen((prev) => !prev);
+          onBlur?.();
+        }}
+        activeOpacity={0.9}
+      >
+        <AppText
+          variant="body1"
+          color={value ? "primary" : "tertiary"}
+          style={[styles.selectValue, !value && styles.placeholderText]}
+        >
+          {value || placeholder}
+        </AppText>
+
+        <Ionicons
+          name={isOpen ? "chevron-up" : "chevron-down"}
+          size={18}
+          color={Colors.text.tertiary}
+        />
+      </TouchableOpacity>
+
+      {isOpen && (
+        <View style={styles.optionsList}>
+          {options.map((option) => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.option,
+                value === option.value && styles.optionActive,
+              ]}
+              onPress={() => {
+                onChange(option.value);
+                setIsOpen(false);
+                onBlur?.();
+              }}
+            >
+              <AppText
+                variant="body1"
+                color={value === option.value ? "primary" : "secondary"}
+                weight={value === option.value ? "semibold" : "regular"}
+              >
+                {option.label}
+              </AppText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {error && (
+        <AppText variant="caption" color="error" style={styles.helperText}>
+          {error}
+        </AppText>
+      )}
+    </View>
+  );
+};
 
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -233,12 +346,15 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             control={control}
             name="department"
             render={({ field }) => (
-              <Input
+              <SelectField
                 label="Department"
-                placeholder="Computer Science"
-                autoCapitalize="words"
                 value={field.value}
-                onChangeText={field.onChange}
+                placeholder="Select department"
+                options={DEPARTMENT_OPTIONS.map((option) => ({
+                  label: option,
+                  value: option,
+                }))}
+                onChange={field.onChange}
                 onBlur={field.onBlur}
                 error={errors.department?.message}
                 required
@@ -266,13 +382,18 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 control={control}
                 name="level"
                 render={({ field }) => (
-                  <Input
+                  <SelectField
                     label="Level"
-                    placeholder="400"
                     value={field.value}
-                    onChangeText={field.onChange}
+                    placeholder="Select level"
+                    options={LEVEL_OPTIONS.map((option) => ({
+                      label: option,
+                      value: option,
+                    }))}
+                    onChange={field.onChange}
                     onBlur={field.onBlur}
                     error={errors.level?.message}
+                    required
                   />
                 )}
               />
@@ -415,6 +536,72 @@ const styles = StyleSheet.create({
 
   roleText: {
     textTransform: "capitalize",
+  },
+
+  selectContainer: {
+    width: "100%",
+  },
+
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing[1.5],
+  },
+
+  required: {
+    marginLeft: 2,
+    lineHeight: 16,
+  },
+
+  selectField: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1.5,
+    borderColor: Colors.border.default,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surface,
+    minHeight: 52,
+    paddingHorizontal: Spacing[4],
+    paddingVertical: Spacing[3],
+  },
+
+  selectFieldError: {
+    borderColor: Colors.status.error,
+    backgroundColor: Colors.status.errorLight,
+  },
+
+  selectValue: {
+    flex: 1,
+    color: Colors.text.primary,
+  },
+
+  placeholderText: {
+    color: Colors.text.tertiary,
+  },
+
+  optionsList: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.border.default,
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing[2],
+    overflow: "hidden",
+  },
+
+  option: {
+    paddingHorizontal: Spacing[4],
+    paddingVertical: Spacing[3.5],
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.default,
+  },
+
+  optionActive: {
+    backgroundColor: Colors.primaryDim,
+  },
+
+  helperText: {
+    marginTop: Spacing[1.5],
   },
 
   submitBtn: {
