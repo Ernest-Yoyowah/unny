@@ -72,7 +72,22 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
+  heroActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing[2],
+  },
+
   backButton: {
+    width: 38,
+    height: 38,
+    borderRadius: BorderRadius.full,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  refreshButton: {
     width: 38,
     height: 38,
     borderRadius: BorderRadius.full,

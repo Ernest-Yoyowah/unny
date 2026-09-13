@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ViewToken,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,35 +30,35 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     id: "1",
-    icon: "rocket-outline",
-    tagline: "ACADEMIC PROJECTS",
-    title: "Discover and showcase academic work.",
+    icon: "school-outline",
+    tagline: "FINAL-YEAR ARCHIVE",
+    title: "A trusted home for GCTU project work.",
     description:
-      "Explore student projects, research resources, and academic contributions from verified institutions in one trusted platform.",
+      "Explore final-year student projects, practical research, and institutional work that helps current students learn from real academic experience.",
   },
   {
     id: "2",
-    icon: "shield-checkmark-outline",
-    tagline: "VERIFIED COMMUNITY",
-    title: "A trusted academic network.",
+    icon: "book-outline",
+    tagline: "LEARN FROM THE PAST",
+    title: "View strong projects before you build your own.",
     description:
-      "Students, Lecturers, and institutions connect through verified identities, reducing misinformation and protecting academic work.",
+      "Browse completed work from GCTU students across departments to understand expectations, quality, and direction for your own final-year project.",
   },
   {
     id: "3",
     icon: "cloud-upload-outline",
-    tagline: "SHARE KNOWLEDGE",
-    title: "Submit, organize, and preserve ideas.",
+    tagline: "PRESERVE KNOWLEDGE",
+    title: "Upload, organise, and archive academic work.",
     description:
-      "Upload projects, attach resources, add documentation, and build a lasting archive of academic achievements.",
+      "Students can submit and preserve their final-year projects so future cohorts can use them as inspiration, reference, and guidance.",
   },
   {
     id: "4",
     icon: "git-merge-outline",
-    tagline: "COLLABORATION",
-    title: "From submission to recognition.",
+    tagline: "COMMUNITY OF GROWTH",
+    title: "Build on the culture of excellence.",
     description:
-      "Follow projects through discovery, review, moderation, and approval while building a stronger academic ecosystem.",
+      "Create a stronger academic ecosystem where students can review, learn, and improve on proven GCTU project work.",
   },
 ];
 
@@ -91,7 +92,11 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <View style={styles.logoMark}>
-          <AppText style={styles.logoText}>U</AppText>
+          <Image
+            source={require("../../../assets/gctu/logoMain.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate("Auth")}
@@ -201,17 +206,17 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[4],
   },
   logoMark: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.md,
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.full,
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
-  logoText: {
-    color: Colors.text.inverse,
-    fontSize: Typography.size.lg,
-    fontWeight: Typography.weight.extrabold,
+  logoImage: {
+    width: 42,
+    height: 42,
   },
   slide: {
     paddingHorizontal: Spacing[6],

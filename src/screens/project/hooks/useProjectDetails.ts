@@ -18,6 +18,7 @@ import {
   isEditableProjectStatus,
   normalizeProjectStatus,
 } from "../../../api/services/project.service";
+import { extractApiError } from "../../../api/client";
 
 type Navigation = NativeStackNavigationProp<MainStackParamList>;
 
@@ -64,13 +65,15 @@ export const useProjectDetails = (
   const isSupervisor =
     currentUser?.role === "lecturer" || currentUser?.role === "admin";
 
-  const editableProjectStatus = isEditableProjectStatus(project?.status);
-  const canEdit =
-    isStudent &&
-    project?.submittedBy?.id === currentUser?.id &&
-    editableProjectStatus;
+  const isProjectOwner =
+    Boolean(currentUser?.id) &&
+    Boolean(project?.submittedBy?.id) &&
+    project?.submittedBy?.id === currentUser?.id;
 
-  const canDelete = isStudent && project?.submittedBy?.id === currentUser?.id;
+  const editableProjectStatus = isEditableProjectStatus(project?.status);
+  const canEdit = isStudent && isProjectOwner && editableProjectStatus;
+
+  const canDelete = isStudent && isProjectOwner;
 
   const projectRequests = useMemo(
     () =>
@@ -306,6 +309,14 @@ export const useProjectDetails = (
       return;
     }
 
+    if (!isProjectOwner) {
+      Alert.alert(
+        "Permission required",
+        "Only the project owner can invite collaborators.",
+      );
+      return;
+    }
+
     try {
       await collaboratorActions.invite.mutateAsync(userId);
 
@@ -314,17 +325,30 @@ export const useProjectDetails = (
         "The student has been invited to contribute to this project.",
       );
     } catch (error) {
+      const apiError = extractApiError(error);
+      const isForbidden =
+        apiError.statusCode === 403 ||
+        /forbidden|permission|not allowed/i.test(apiError.message);
+
       Alert.alert(
-        "Invitation failed",
-        error instanceof Error
-          ? error.message
-          : "We could not send the collaboration invitation.",
+        isForbidden ? "Permission required" : "Invitation failed",
+        isForbidden
+          ? "Only the project owner can invite collaborators."
+          : apiError.message,
       );
     }
   };
 
   const handleRemoveCollaborator = (userId: string) => {
     if (collaboratorActions.remove.isPending) {
+      return;
+    }
+
+    if (!isProjectOwner) {
+      Alert.alert(
+        "Permission required",
+        "Only the project owner can remove collaborators.",
+      );
       return;
     }
 
@@ -361,6 +385,14 @@ export const useProjectDetails = (
       return;
     }
 
+    if (!isProjectOwner) {
+      Alert.alert(
+        "Permission required",
+        "Only the project owner can request supervision for this project.",
+      );
+      return;
+    }
+
     try {
       await collaboratorActions.supervise.mutateAsync({
         supervisorId,
@@ -376,11 +408,16 @@ export const useProjectDetails = (
         "Your supervision request has been sent to the supervisor.",
       );
     } catch (error) {
+      const apiError = extractApiError(error);
+      const isForbidden =
+        apiError.statusCode === 403 ||
+        /forbidden|permission|not allowed/i.test(apiError.message);
+
       Alert.alert(
-        "Request failed",
-        error instanceof Error
-          ? error.message
-          : "We could not send the supervision request.",
+        isForbidden ? "Permission required" : "Request failed",
+        isForbidden
+          ? "Only the project owner can request supervision for this project."
+          : apiError.message,
       );
     }
   };
@@ -401,6 +438,19 @@ export const useProjectDetails = (
       {
         onSuccess: () => {
           refetchSupervisionRequests();
+        },
+        onError: (error) => {
+          const apiError = extractApiError(error);
+          const isForbidden =
+            apiError.statusCode === 403 ||
+            /forbidden|permission|not allowed/i.test(apiError.message);
+
+          Alert.alert(
+            isForbidden ? "Permission required" : "Request update failed",
+            isForbidden
+              ? "Only the project owner or assigned supervisor can respond to this request."
+              : apiError.message,
+          );
         },
       },
     );
@@ -429,6 +479,7 @@ export const useProjectDetails = (
     collaboratorActions,
     isStudent,
     isSupervisor,
+    isProjectOwner,
     canEdit,
     canDelete,
     projectRequests,

@@ -5,9 +5,10 @@ import axios, {
 } from "axios";
 import * as SecureStore from "expo-secure-store";
 
+// NEW: https://unny-backend.onrender.com
+
 const configuredBaseUrl =
-  process.env.EXPO_PUBLIC_API_URL ??
-  "https://unny-backend-reviced-prototype.onrender.com";
+  process.env.EXPO_PUBLIC_API_URL ?? "https://unny-backend.onrender.com";
 const BASE_URL = /\/api\/v1\/?$/.test(configuredBaseUrl)
   ? configuredBaseUrl.replace(/\/$/, "")
   : `${configuredBaseUrl.replace(/\/$/, "")}/api/v1`;

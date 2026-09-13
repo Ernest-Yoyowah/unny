@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   View,
@@ -25,13 +25,53 @@ import { extractApiError } from "../../api/client";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
-const DEPARTMENT_OPTIONS = [
-  "Engineering",
-  "Computer Science",
-  "Information Technology",
-] as const;
+const FACULTY_DEPARTMENT_MAP = {
+  "Faculty Of Engineering": [
+    "Electrical and Electronics Engineering",
+    "Computer Engineering",
+    "Telecommunications Engineering",
+    "Mathematics and Statistics",
+  ],
+  "School Of Graduate Studies And Research (SGSR)": [
+    "Computer Science",
+    "Information Technology",
+    "Mobile and Pervasive Computing",
+    "Accounting, Banking and Finance",
+    "Marketing",
+    "Management Studies",
+    "Economics",
+    "Procurement, Logistics and Supply Chain Management",
+  ],
+  "GCTU Business School": [
+    "Procurement, Logistics and Supply Chain Management",
+    "Management Studies",
+    "Accounting, Banking and Finance",
+    "Marketing",
+    "Economics",
+  ],
+  "Faculty Of Computing And Information Systems (FoCIS)": [
+    "Mobile and Pervasive Computing",
+    "Information Systems",
+    "Computer Science",
+    "Information Technology",
+    "General Studies",
+  ],
+} as const;
 
-const LEVEL_OPTIONS = ["400"] as const;
+type FacultyName = keyof typeof FACULTY_DEPARTMENT_MAP;
+
+const FACULTY_OPTIONS: FacultyName[] = [
+  "Faculty Of Engineering",
+  "School Of Graduate Studies And Research (SGSR)",
+  "GCTU Business School",
+  "Faculty Of Computing And Information Systems (FoCIS)",
+];
+
+const LEVEL_OPTIONS = ["100", "200", "300", "400"] as const;
+
+const ALL_DEPARTMENTS = Object.values(
+  FACULTY_DEPARTMENT_MAP,
+).flat() as readonly string[];
 
 const schema = z
   .object({
@@ -42,7 +82,7 @@ const schema = z
     department: z
       .string()
       .min(1, "Select your department")
-      .refine((value) => DEPARTMENT_OPTIONS.includes(value as any), {
+      .refine((value) => ALL_DEPARTMENTS.includes(value), {
         message: "Choose a valid department",
       }),
 
@@ -51,9 +91,13 @@ const schema = z
     level: z
       .string()
       .min(1, "Select your level")
-      .refine((value) => LEVEL_OPTIONS.includes(value as any), {
-        message: "Only final-year level 400 is allowed",
-      }),
+      .refine(
+        (value) =>
+          LEVEL_OPTIONS.includes(value as (typeof LEVEL_OPTIONS)[number]),
+        {
+          message: "Select a valid level",
+        },
+      ),
 
     role: z.enum(["student", "lecturer"]),
 
@@ -81,6 +125,7 @@ interface SelectFieldProps {
   onBlur?: () => void;
   error?: string;
   required?: boolean;
+  disabled?: boolean;
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({
@@ -92,8 +137,15 @@ const SelectField: React.FC<SelectFieldProps> = ({
   onBlur,
   error,
   required,
+  disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+    }
+  }, [disabled]);
 
   return (
     <View style={styles.selectContainer}>
@@ -101,6 +153,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
         <AppText variant="label" weight="medium" color="primary">
           {label}
         </AppText>
+
         {required && (
           <AppText variant="label" color="error" style={styles.required}>
             *
@@ -109,12 +162,20 @@ const SelectField: React.FC<SelectFieldProps> = ({
       </View>
 
       <TouchableOpacity
-        style={[styles.selectField, error && styles.selectFieldError]}
+        style={[
+          styles.selectField,
+          error && styles.selectFieldError,
+          disabled && styles.selectFieldDisabled,
+        ]}
         onPress={() => {
-          setIsOpen((prev) => !prev);
-          onBlur?.();
+          if (disabled) {
+            return;
+          }
+
+          setIsOpen((previous) => !previous);
         }}
         activeOpacity={0.9}
+        disabled={disabled}
       >
         <AppText
           variant="body1"
@@ -131,20 +192,22 @@ const SelectField: React.FC<SelectFieldProps> = ({
         />
       </TouchableOpacity>
 
-      {isOpen && (
+      {isOpen && options.length > 0 && (
         <View style={styles.optionsList}>
-          {options.map((option) => (
+          {options.map((option, index) => (
             <TouchableOpacity
               key={option.value}
               style={[
                 styles.option,
                 value === option.value && styles.optionActive,
+                index === options.length - 1 && styles.optionLast,
               ]}
               onPress={() => {
                 onChange(option.value);
                 setIsOpen(false);
                 onBlur?.();
               }}
+              activeOpacity={0.8}
             >
               <AppText
                 variant="body1"
@@ -176,14 +239,18 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     "student",
   );
 
+  const [selectedFaculty, setSelectedFaculty] = useState<FacultyName | null>(
+    null,
+  );
+
   const {
     control,
     handleSubmit,
     setValue,
+    clearErrors,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-
     defaultValues: {
       fullName: "",
       email: "",
@@ -198,8 +265,21 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const apiError = error ? extractApiError(error) : null;
 
+  const departmentOptions = useMemo(() => {
+    if (!selectedFaculty) {
+      return [];
+    }
+
+    return FACULTY_DEPARTMENT_MAP[selectedFaculty].map((department) => ({
+      label: department,
+      value: department,
+    }));
+  }, [selectedFaculty]);
+
   useEffect(() => {
-    if (apiError) Alert.alert("Registration failed", apiError.message);
+    if (apiError) {
+      Alert.alert("Registration failed", apiError.message);
+    }
   }, [apiError]);
 
   const onSubmit = (values: FormValues) => {
@@ -208,7 +288,30 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleRoleSelect = (role: "student" | "lecturer") => {
     setSelectedRole(role);
-    setValue("role", role);
+    setValue("role", role, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const handleFacultySelect = (faculty: FacultyName) => {
+    setSelectedFaculty(faculty);
+
+    setValue("department", "", {
+      shouldDirty: true,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+
+    clearErrors("department");
+  };
+
+  const handleDepartmentSelect = (
+    department: string,
+    onChange: (value: string) => void,
+  ) => {
+    onChange(department);
+    clearErrors("department");
   };
 
   return (
@@ -246,7 +349,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           </AppText>
 
           <AppText variant="body1" color="secondary">
-            Join your academic community on Unny.
+            Join your GCTU project archive community.
           </AppText>
         </View>
 
@@ -275,7 +378,6 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   key={role}
                   style={[
                     styles.roleOption,
-
                     selectedRole === role && styles.roleOptionActive,
                   ]}
                   onPress={() => handleRoleSelect(role)}
@@ -342,6 +444,18 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             )}
           />
 
+          <SelectField
+            label="Faculty / School"
+            value={selectedFaculty ?? ""}
+            placeholder="Select faculty or school"
+            options={FACULTY_OPTIONS.map((faculty) => ({
+              label: faculty,
+              value: faculty,
+            }))}
+            onChange={(value) => handleFacultySelect(value as FacultyName)}
+            required
+          />
+
           <Controller
             control={control}
             name="department"
@@ -349,15 +463,17 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               <SelectField
                 label="Department"
                 value={field.value}
-                placeholder="Select department"
-                options={DEPARTMENT_OPTIONS.map((option) => ({
-                  label: option,
-                  value: option,
-                }))}
-                onChange={field.onChange}
+                placeholder={
+                  selectedFaculty ? "Select department" : "Select faculty first"
+                }
+                options={departmentOptions}
+                onChange={(value) =>
+                  handleDepartmentSelect(value, field.onChange)
+                }
                 onBlur={field.onBlur}
                 error={errors.department?.message}
                 required
+                disabled={!selectedFaculty}
               />
             )}
           />
@@ -378,6 +494,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   />
                 )}
               />
+
               <Controller
                 control={control}
                 name="level"
@@ -386,9 +503,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                     label="Level"
                     value={field.value}
                     placeholder="Select level"
-                    options={LEVEL_OPTIONS.map((option) => ({
-                      label: option,
-                      value: option,
+                    options={LEVEL_OPTIONS.map((level) => ({
+                      label: `Level ${level}`,
+                      value: level,
                     }))}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
@@ -571,6 +688,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.status.errorLight,
   },
 
+  selectFieldDisabled: {
+    opacity: 0.55,
+    backgroundColor: Colors.background,
+  },
+
   selectValue: {
     flex: 1,
     color: Colors.text.primary,
@@ -594,6 +716,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[3.5],
     borderBottomWidth: 1,
     borderBottomColor: Colors.border.default,
+  },
+
+  optionLast: {
+    borderBottomWidth: 0,
   },
 
   optionActive: {

@@ -1,41 +1,51 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Dimensions, Easing, StyleSheet, View } from "react-native";
+import {
+  Animated,
+  Easing,
+  Image,
+  StyleSheet,
+  StatusBar,
+  View,
+} from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { AppText } from "../../components/ui";
-import { Colors, Spacing, Typography, BorderRadius } from "../../theme";
+import { Colors, Spacing, Typography } from "../../theme";
 import { RootStackParamList } from "../../navigation/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Splash">;
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-
 const PARTICLES = [
-  { left: "12%", top: "19%", size: 4, delay: 0 },
-  { left: "82%", top: "23%", size: 3, delay: 500 },
-  { left: "22%", top: "34%", size: 2, delay: 900 },
-  { left: "88%", top: "39%", size: 4, delay: 300 },
-  { left: "8%", top: "61%", size: 3, delay: 700 },
-  { left: "91%", top: "67%", size: 2, delay: 1100 },
-  { left: "17%", top: "78%", size: 3, delay: 400 },
-  { left: "79%", top: "81%", size: 4, delay: 800 },
+  { left: "10%", top: "17%", size: 3, delay: 0 },
+  { left: "86%", top: "20%", size: 4, delay: 500 },
+  { left: "18%", top: "31%", size: 2, delay: 900 },
+  { left: "91%", top: "38%", size: 3, delay: 300 },
+  { left: "7%", top: "58%", size: 3, delay: 700 },
+  { left: "88%", top: "65%", size: 2, delay: 1100 },
+  { left: "15%", top: "78%", size: 3, delay: 400 },
+  { left: "82%", top: "82%", size: 4, delay: 800 },
 ];
+
+const NAVY = "#06182B";
+const NAVY_DEEP = "#03111F";
+const GOLD = "#F5B82E";
+const GOLD_LIGHT = "#FFD66B";
+const WHITE = "#FFFFFF";
+const MUTED_WHITE = "rgba(255,255,255,0.72)";
 
 export const SplashScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const logoScale = useRef(new Animated.Value(0.65)).current;
+  const logoScale = useRef(new Animated.Value(0.88)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const logoGlow = useRef(new Animated.Value(0.25)).current;
-  const ringScale = useRef(new Animated.Value(0.7)).current;
-  const ringOpacity = useRef(new Animated.Value(0)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
-  const contentTranslate = useRef(new Animated.Value(24)).current;
+  const contentTranslate = useRef(new Animated.Value(20)).current;
   const bottomOpacity = useRef(new Animated.Value(0)).current;
-  const bottomTranslate = useRef(new Animated.Value(18)).current;
+  const bottomTranslate = useRef(new Animated.Value(14)).current;
   const backgroundScale = useRef(new Animated.Value(1)).current;
   const exitOpacity = useRef(new Animated.Value(1)).current;
+  const goldLineScale = useRef(new Animated.Value(0)).current;
+
   const particleAnimations = useRef(
     PARTICLES.map(() => ({
       opacity: new Animated.Value(0),
@@ -51,7 +61,7 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
           Animated.delay(PARTICLES[index].delay),
           Animated.parallel([
             Animated.timing(particle.opacity, {
-              toValue: 0.7,
+              toValue: 0.42,
               duration: 900,
               easing: Easing.out(Easing.ease),
               useNativeDriver: true,
@@ -71,7 +81,7 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
           ]),
           Animated.parallel([
             Animated.timing(particle.opacity, {
-              toValue: 0.25,
+              toValue: 0.08,
               duration: 1000,
               easing: Easing.inOut(Easing.ease),
               useNativeDriver: true,
@@ -97,7 +107,7 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
       Animated.parallel([
         Animated.spring(logoScale, {
           toValue: 1,
-          friction: 6,
+          friction: 7,
           tension: 45,
           useNativeDriver: true,
         }),
@@ -107,19 +117,13 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.timing(ringOpacity, {
-          toValue: 0.45,
-          duration: 700,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.spring(ringScale, {
-          toValue: 1,
-          friction: 7,
-          tension: 35,
-          useNativeDriver: true,
-        }),
       ]),
+      Animated.timing(goldLineScale, {
+        toValue: 1,
+        duration: 450,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
       Animated.parallel([
         Animated.timing(contentOpacity, {
           toValue: 1,
@@ -161,44 +165,35 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
       }
     });
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(logoGlow, {
-          toValue: 0.55,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoGlow, {
-          toValue: 0.2,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-
-    Animated.loop(
+    const backgroundAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(backgroundScale, {
-          toValue: 1.04,
-          duration: 3200,
+          toValue: 1.025,
+          duration: 5000,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(backgroundScale, {
           toValue: 1,
-          duration: 3200,
+          duration: 5000,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
       ]),
-    ).start();
+    );
 
-    particleLoops.forEach((animation) => animation.start());
+    backgroundAnimation.start();
+
+    particleLoops.forEach((animation) => {
+      animation.start();
+    });
 
     return () => {
-      particleLoops.forEach((animation) => animation.stop());
+      backgroundAnimation.stop();
+
+      particleLoops.forEach((animation) => {
+        animation.stop();
+      });
     };
   }, [
     backgroundScale,
@@ -207,13 +202,11 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
     contentOpacity,
     contentTranslate,
     exitOpacity,
-    logoGlow,
+    goldLineScale,
     logoOpacity,
     logoScale,
     navigation,
     particleAnimations,
-    ringOpacity,
-    ringScale,
   ]);
 
   return (
@@ -222,11 +215,15 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
         styles.container,
         {
           opacity: exitOpacity,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
         },
       ]}
     >
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={NAVY_DEEP}
+        translucent={false}
+      />
+
       <Animated.View
         style={[
           styles.background,
@@ -235,9 +232,16 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
           },
         ]}
       >
-        <View style={styles.backgroundOrbOne} />
-        <View style={styles.backgroundOrbTwo} />
-        <View style={styles.backgroundOrbThree} />
+        <Image
+          source={require("../../../assets/gctu/sch-entrace.jpeg")}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+
+        <View style={styles.navyWash} />
+        <View style={styles.imageTint} />
+        <View style={styles.topOverlay} />
+        <View style={styles.bottomOverlay} />
       </Animated.View>
 
       <View style={styles.particles}>
@@ -253,8 +257,12 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
                 top: particle.top as `${number}%`,
                 opacity: particleAnimations[index].opacity,
                 transform: [
-                  { translateY: particleAnimations[index].translateY },
-                  { scale: particleAnimations[index].scale },
+                  {
+                    translateY: particleAnimations[index].translateY,
+                  },
+                  {
+                    scale: particleAnimations[index].scale,
+                  },
                 ],
               },
             ]}
@@ -262,50 +270,56 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
         ))}
       </View>
 
-      <View style={styles.center}>
-        <View style={styles.logoArea}>
-          <Animated.View
-            style={[
-              styles.outerRing,
-              {
-                opacity: ringOpacity,
-                transform: [{ scale: ringScale }],
-              },
-            ]}
+      <View
+        style={[
+          styles.topBrand,
+          {
+            top: insets.top + Spacing[3],
+          },
+        ]}
+      >
+        <View style={styles.accentDot} />
+
+        <AppText style={styles.universityLabel}>
+          GHANA COMMUNICATION TECHNOLOGY UNIVERSITY
+        </AppText>
+      </View>
+
+      <View
+        style={[
+          styles.center,
+          {
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+          },
+        ]}
+      >
+        <Animated.View
+          style={[
+            styles.brand,
+            {
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
+            },
+          ]}
+        >
+          <Image
+            source={require("../../../assets/gctu/logoMain.png")}
+            style={styles.logo}
+            resizeMode="contain"
           />
 
           <Animated.View
             style={[
-              styles.middleRing,
+              styles.goldLine,
               {
-                opacity: ringOpacity,
-                transform: [{ scale: ringScale }],
+                transform: [{ scaleX: goldLineScale }],
               },
             ]}
           />
 
-          <Animated.View
-            style={[
-              styles.logoGlow,
-              {
-                opacity: logoGlow,
-                transform: [{ scale: logoScale }],
-              },
-            ]}
-          />
-
-          <Animated.View
-            style={[
-              styles.logo,
-              {
-                opacity: logoOpacity,
-                transform: [{ scale: logoScale }],
-              },
-            ]}
-          >
-            <AppText style={styles.logoText}>U</AppText>
-          </Animated.View>
-        </View>
+          <AppText style={styles.brandSubtitle}>PROJECT ARCHIVE</AppText>
+        </Animated.View>
 
         <Animated.View
           style={[
@@ -316,16 +330,19 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
             },
           ]}
         >
-          <AppText style={styles.brandName}>Unny</AppText>
+          <View style={styles.eyebrowRow}>
+            <View style={styles.eyebrowLine} />
 
-          <AppText style={styles.headline}>
-            Where ideas
-            {"\n"}
-            become <AppText style={styles.headlineAccent}>impact.</AppText>
-          </AppText>
+            <AppText style={styles.eyebrow}>ACADEMIC LEGACY</AppText>
+
+            <View style={styles.eyebrowLine} />
+          </View>
+
+          <AppText style={styles.headline}>Final-year student archive</AppText>
 
           <AppText style={styles.description}>
-            Discover knowledge. Share ideas.{"\n"}Build what lasts.
+            Discover completed projects, research, and ideas from the academic
+            community of GCTU.
           </AppText>
         </Animated.View>
       </View>
@@ -336,16 +353,19 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
           {
             opacity: bottomOpacity,
             transform: [{ translateY: bottomTranslate }],
+            paddingBottom: Math.max(insets.bottom, Spacing[5]),
           },
         ]}
       >
-        <View style={styles.footerLine} />
-        <AppText style={styles.footerText}>
-          A trusted home for academic excellence
-        </AppText>
-        <View style={styles.footerIcon}>
-          <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingTrack}>
+            <View style={styles.loadingProgress} />
+          </View>
         </View>
+
+        <AppText style={styles.footerText}>PREPARING YOUR ARCHIVE</AppText>
+
+        <View style={styles.footerAccent} />
       </Animated.View>
     </Animated.View>
   );
@@ -354,172 +374,219 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: NAVY_DEEP,
     overflow: "hidden",
   },
+
   background: {
     ...StyleSheet.absoluteFill,
   },
-  backgroundOrbOne: {
-    position: "absolute",
-    width: SCREEN_WIDTH * 1.35,
-    height: SCREEN_WIDTH * 1.35,
-    borderRadius: SCREEN_WIDTH,
-    backgroundColor: Colors.primaryDim,
-    opacity: 0.3,
-    top: -SCREEN_WIDTH * 0.6,
-    left: -SCREEN_WIDTH * 0.35,
+
+  backgroundImage: {
+    ...StyleSheet.absoluteFill,
+    width: "100%",
+    height: "100%",
   },
-  backgroundOrbTwo: {
-    position: "absolute",
-    width: SCREEN_WIDTH * 1.15,
-    height: SCREEN_WIDTH * 1.15,
-    borderRadius: SCREEN_WIDTH,
-    backgroundColor: Colors.primary,
-    opacity: 0.045,
-    bottom: -SCREEN_WIDTH * 0.35,
-    right: -SCREEN_WIDTH * 0.45,
+
+  navyWash: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(3, 17, 31, 0.67)",
   },
-  backgroundOrbThree: {
-    position: "absolute",
-    width: SCREEN_WIDTH * 0.75,
-    height: SCREEN_WIDTH * 0.75,
-    borderRadius: SCREEN_WIDTH,
-    backgroundColor: Colors.primary,
-    opacity: 0.035,
-    top: SCREEN_HEIGHT * 0.32,
-    left: -SCREEN_WIDTH * 0.38,
+
+  imageTint: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(6, 24, 43, 0.28)",
   },
+
+  topOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "40%",
+    backgroundColor: "rgba(3, 15, 28, 0.26)",
+  },
+
+  bottomOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "46%",
+    backgroundColor: "rgba(3, 13, 25, 0.38)",
+  },
+
   particles: {
     ...StyleSheet.absoluteFill,
   },
+
   particle: {
     position: "absolute",
     borderRadius: 999,
-    backgroundColor: Colors.primary,
+    backgroundColor: GOLD,
   },
+
+  topBrand: {
+    position: "absolute",
+    left: Spacing[6],
+    right: Spacing[6],
+    zIndex: 5,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+
+  accentDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: GOLD,
+    marginRight: Spacing[2],
+  },
+
+  universityLabel: {
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 8,
+    fontWeight: Typography.weight.semibold,
+    letterSpacing: 1.55,
+    textAlign: "center",
+  },
+
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing[6],
-    marginTop: -Spacing[10],
+    marginTop: -Spacing[7],
   },
-  logoArea: {
-    width: 190,
-    height: 190,
+
+  brand: {
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing[8],
+    marginBottom: Spacing[7],
   },
-  outerRing: {
-    position: "absolute",
-    width: 186,
-    height: 186,
-    borderRadius: 93,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  middleRing: {
-    position: "absolute",
-    width: 148,
-    height: 148,
-    borderRadius: 74,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  logoGlow: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: Colors.primary,
-    shadowColor: Colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.9,
-    shadowRadius: 35,
-    elevation: 20,
-  },
+
   logo: {
-    width: 92,
+    width: 225,
     height: 92,
-    borderRadius: 30,
-    backgroundColor: Colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: Colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 15,
   },
-  logoText: {
-    color: Colors.text.inverse,
-    fontSize: 54,
-    lineHeight: 62,
-    fontWeight: Typography.weight.extrabold,
-    letterSpacing: -3,
+
+  goldLine: {
+    width: 54,
+    height: 3,
+    marginTop: Spacing[4],
+    backgroundColor: GOLD,
+    borderRadius: 999,
   },
+
+  brandSubtitle: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 9,
+    fontWeight: Typography.weight.semibold,
+    letterSpacing: 3.4,
+    marginTop: Spacing[3],
+  },
+
   content: {
     alignItems: "center",
+    width: "100%",
+    maxWidth: 360,
   },
-  brandName: {
-    color: Colors.primary,
-    fontSize: Typography.size.sm,
-    fontWeight: Typography.weight.bold,
-    letterSpacing: 5,
-    marginBottom: Spacing[4],
-  },
-  headline: {
-    color: Colors.text.primary,
-    fontSize: 38,
-    lineHeight: 44,
-    fontWeight: Typography.weight.extrabold,
-    letterSpacing: -1.5,
-    textAlign: "center",
-  },
-  headlineAccent: {
-    color: Colors.primary,
-  },
-  description: {
-    marginTop: Spacing[5],
-    color: Colors.text.secondary,
-    fontSize: Typography.size.md,
-    lineHeight: 24,
-    textAlign: "center",
-  },
-  footer: {
-    alignItems: "center",
-    paddingHorizontal: Spacing[6],
-    paddingBottom: Spacing[5],
-  },
-  footerLine: {
-    width: 34,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
-    marginBottom: Spacing[3],
-  },
-  footerText: {
-    color: Colors.text.tertiary,
-    fontSize: Typography.size.xs,
-    fontWeight: Typography.weight.medium,
-    letterSpacing: 0.2,
-    textAlign: "center",
-  },
-  footerIcon: {
-    marginTop: Spacing[3],
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.primaryDim,
+
+  eyebrowRow: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
+    marginBottom: Spacing[3],
+  },
+
+  eyebrowLine: {
+    width: 30,
+    height: 1,
+    backgroundColor: "rgba(245,184,46,0.58)",
+  },
+
+  eyebrow: {
+    color: GOLD_LIGHT,
+    fontSize: 9,
+    fontWeight: Typography.weight.semibold,
+    letterSpacing: 2.4,
+    marginHorizontal: Spacing[2],
+  },
+
+  headline: {
+    color: WHITE,
+    fontSize: 30,
+    lineHeight: 37,
+    fontWeight: Typography.weight.extrabold,
+    letterSpacing: -0.9,
+    textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.55)",
+    textShadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    textShadowRadius: 8,
+  },
+
+  description: {
+    marginTop: Spacing[3],
+    maxWidth: 330,
+    color: MUTED_WHITE,
+    fontSize: Typography.size.md,
+    lineHeight: 23,
+    textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    textShadowRadius: 6,
+  },
+
+  footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    paddingHorizontal: Spacing[6],
+  },
+
+  loadingContainer: {
+    width: 116,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    overflow: "hidden",
+    marginBottom: Spacing[3],
+  },
+
+  loadingTrack: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+
+  loadingProgress: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: GOLD,
+  },
+
+  footerText: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 8,
+    fontWeight: Typography.weight.semibold,
+    letterSpacing: 1.7,
+    textAlign: "center",
+  },
+
+  footerAccent: {
+    width: 20,
+    height: 1,
+    marginTop: Spacing[3],
+    backgroundColor: "rgba(245,184,46,0.45)",
   },
 });

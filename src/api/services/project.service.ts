@@ -321,8 +321,7 @@ export const normalizeStorageUrl = (value?: string) => {
     }
 
     const backendOrigin =
-      process.env.EXPO_PUBLIC_API_URL ??
-      "https://unny-backend-reviced-prototype.onrender.com";
+      process.env.EXPO_PUBLIC_API_URL ?? "https://unny-backend.onrender.com";
 
     const resolvedOrigin = backendOrigin.replace(/\/api\/v1\/?$/, "");
     const normalized = new URL(parsed.pathname + parsed.search, resolvedOrigin);

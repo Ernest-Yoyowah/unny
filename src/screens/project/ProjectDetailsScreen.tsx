@@ -42,6 +42,7 @@ import {
   LoadingRow,
   SectionHeader,
 } from "./components/project-details/ProjectDetailsUI";
+import { extractApiError } from "../../api/client";
 
 type Props = NativeStackScreenProps<MainStackParamList, "ProjectDetails">;
 
@@ -65,6 +66,7 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
     collaboratorActions,
     isStudent,
     isSupervisor,
+    isProjectOwner,
     canEdit,
     projectRequests,
     myRequests,
@@ -301,16 +303,32 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
             <Ionicons name="arrow-back" size={21} color={Colors.text.inverse} />
           </TouchableOpacity>
 
-          <View style={styles.heroRole}>
-            <Ionicons
-              name={isStudent ? "school-outline" : "people-outline"}
-              size={14}
-              color="rgba(255,255,255,0.75)"
-            />
+          <View style={styles.heroActions}>
+            <TouchableOpacity
+              disabled={isLoading}
+              onPress={() => refetch()}
+              style={styles.refreshButton}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh project details"
+            >
+              <Ionicons
+                name={isLoading ? "sync" : "refresh-outline"}
+                size={18}
+                color={Colors.text.inverse}
+              />
+            </TouchableOpacity>
 
-            <AppText style={styles.heroRoleText}>
-              {isStudent ? "MY PROJECT" : "SUPERVISION"}
-            </AppText>
+            <View style={styles.heroRole}>
+              <Ionicons
+                name={isStudent ? "school-outline" : "people-outline"}
+                size={14}
+                color="rgba(255,255,255,0.75)"
+              />
+
+              <AppText style={styles.heroRoleText}>
+                {isStudent ? "MY PROJECT" : "SUPERVISION"}
+              </AppText>
+            </View>
           </View>
         </View>
 
@@ -442,34 +460,37 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
             </Card>
           )}
 
-          {isStudent && !project.supervisor && !myLatestRequest && (
-            <Card style={styles.nextStepCard}>
-              <View style={styles.nextStepIcon}>
+          {isStudent &&
+            isProjectOwner &&
+            !project.supervisor &&
+            !myLatestRequest && (
+              <Card style={styles.nextStepCard}>
+                <View style={styles.nextStepIcon}>
+                  <Ionicons
+                    name="school-outline"
+                    size={22}
+                    color={Colors.accent}
+                  />
+                </View>
+
+                <View style={styles.nextStepContent}>
+                  <AppText variant="body2" weight="semibold">
+                    Find a supervisor
+                  </AppText>
+
+                  <AppText variant="caption" color="secondary">
+                    Your project does not have a supervisor yet. Browse
+                    available supervisors below to send a request.
+                  </AppText>
+                </View>
+
                 <Ionicons
-                  name="school-outline"
-                  size={22}
+                  name="arrow-down-outline"
+                  size={18}
                   color={Colors.accent}
                 />
-              </View>
-
-              <View style={styles.nextStepContent}>
-                <AppText variant="body2" weight="semibold">
-                  Find a supervisor
-                </AppText>
-
-                <AppText variant="caption" color="secondary">
-                  Your project does not have a supervisor yet. Browse available
-                  supervisors below to send a request.
-                </AppText>
-              </View>
-
-              <Ionicons
-                name="arrow-down-outline"
-                size={18}
-                color={Colors.accent}
-              />
-            </Card>
-          )}
+              </Card>
+            )}
 
           <SectionHeader
             icon="information-circle-outline"
@@ -575,7 +596,7 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
               onRemoveCollaborator={handleRemoveCollaborator}
             />
 
-            {isStudent && (
+            {isStudent && isProjectOwner && (
               <CollaboratorInviteSection
                 students={availableStudents}
                 isLoading={directory.isLoading}
@@ -636,7 +657,7 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
                   </AppText>
                 </View>
               </View>
-            ) : isStudent ? (
+            ) : isStudent && isProjectOwner ? (
               <View style={styles.workflowBlock}>
                 {!myPendingRequest && (
                   <>
@@ -717,7 +738,13 @@ export const ProjectDetailsScreen: React.FC<Props> = ({
                 )}
               </View>
             ) : (
-              <InlineMessage text="No supervisor assigned." />
+              <InlineMessage
+                text={
+                  isStudent && !isProjectOwner
+                    ? "Only the project owner can manage supervisor requests."
+                    : "No supervisor assigned."
+                }
+              />
             )}
 
             {isSupervisor &&

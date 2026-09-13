@@ -7,6 +7,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,7 +33,7 @@ type FormValues = z.infer<typeof schema>;
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const { mutate: login, isPending, error } = useLogin();
+  const { mutateAsync: login, isPending, error, reset } = useLogin();
 
   const {
     control,
@@ -49,15 +50,28 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const apiError = error ? extractApiError(error) : null;
 
   useEffect(() => {
-    if (apiError) Alert.alert("Sign in failed", apiError.message);
+    if (!apiError) {
+      return;
+    }
+
+    Alert.alert("Sign in failed", apiError.message);
   }, [apiError]);
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     if (isPending) {
       return;
     }
 
-    login(values);
+    reset();
+
+    try {
+      await login({
+        email: values.email.trim(),
+        password: values.password,
+      });
+    } catch {
+      return;
+    }
   };
 
   return (
@@ -73,15 +87,11 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           },
         ]}
       >
-        <View style={styles.logoMark}>
-          <AppText style={styles.logoLetter}>U</AppText>
-        </View>
-
-        <AppText style={styles.brandName}>Unny</AppText>
-
-        <AppText style={styles.tagline}>
-          Academic collaboration · Akwaaba
-        </AppText>
+        <Image
+          source={require("../../../assets/gctu/logo-2.png")}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
       </View>
 
       <View style={styles.sheet}>
@@ -126,6 +136,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                   onBlur={onBlur}
                   error={errors.email?.message}
                   required
+                  editable={!isPending}
                 />
               )}
             />
@@ -145,6 +156,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                   onBlur={onBlur}
                   error={errors.password?.message}
                   required
+                  editable={!isPending}
                 />
               )}
             />
@@ -153,6 +165,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               onPress={() => navigation.navigate("ForgotPassword")}
               style={styles.forgotLink}
               accessibilityRole="button"
+              disabled={isPending}
             >
               <AppText variant="body2" color="accent" weight="medium">
                 Forgot password?
@@ -162,22 +175,24 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <Button
               variant="primary"
               size="lg"
-              label="Sign In"
+              label={isPending ? "Signing In..." : "Sign In"}
               onPress={handleSubmit(onSubmit)}
               isLoading={isPending}
               fullWidth
+              disabled={isPending}
               style={styles.submitBtn}
             />
           </View>
 
           <View style={styles.footer}>
             <AppText variant="body2" color="secondary">
-              New to Unny?{" "}
+              New to GCTU archive?{" "}
             </AppText>
 
             <TouchableOpacity
               onPress={() => navigation.navigate("Register")}
               accessibilityRole="button"
+              disabled={isPending}
             >
               <AppText variant="body2" color="accent" weight="semibold">
                 Create account
@@ -211,13 +226,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing[2],
+    overflow: "hidden",
   },
 
-  logoLetter: {
-    color: Colors.primary,
-    fontSize: 34,
-    fontWeight: "800" as const,
-    letterSpacing: -1,
+  logoImage: {
+    width: "100%",
+    height: 100,
   },
 
   brandName: {
@@ -225,10 +239,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.size["3xl"],
     fontWeight: Typography.weight.extrabold,
     letterSpacing: -1,
+    paddingTop: Spacing[2],
   },
 
   tagline: {
-    color: Colors.gold,
+    color: "white",
     fontSize: Typography.size.sm,
     fontWeight: Typography.weight.medium,
     letterSpacing: 0.4,
